@@ -11,7 +11,7 @@ functionality to Pandas DataFrames.
 * Chaining commands
 * Works seemlessly with [Pandas Style API](http://pandas.pydata.org/pandas-docs/stable/style.html)
 
-[Demo Notebook](http://nbviewer.jupyter.org/github/HHammond/PrettyPandas/blob/master/PrettyPandas%20Demo.ipynb)
+[Demo Notebook](http://nbviewer.jupyter.org/github/HHammond/PrettyPandas/blob/master/docs/PrettyPandas%20Demo.ipynb)
 
 ## Installation
 
