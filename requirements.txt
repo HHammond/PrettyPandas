@@ -1,0 +1,4 @@
+ipython
+jinja2
+numpy
+pandas >= 0.17.1
