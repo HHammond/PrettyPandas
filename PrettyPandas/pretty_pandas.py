@@ -9,7 +9,7 @@ import numpy as np
 from collections import namedtuple
 from itertools import product
 
-from formatters import as_percent, as_money
+from formatters import as_percent, as_money, as_unit
 
 
 def apply_pretty_globals():
@@ -63,88 +63,6 @@ class PrettyPandas(Styler):
         list of single-row dataframes to be appended as a summary
     summary_cols:
         list of single-row dataframes to be appended as a summary
-
-    Basic Usage
-    ===========
-
-    Add a simple total
-    ```
-    PrettyPandas(df).summary()
-    ```
-
-    Add an average
-    ```
-    PrettyPandas(df).summary(np.mean, "Average")
-    ```
-
-    Add an average across the table
-    ```
-    PrettyPandas(df).summary(np.mean, "Avarage", axis=1)
-    ```
-
-    Add an average across and down the table
-    ```
-    PrettyPandas(df).summary(np.mean, "Avarage", axis=None)
-    ```
-
-    Summaries can be chained together
-    ```
-    PrettyPandas(df).summary().summary(np.mean, "Average)
-    ```
-
-    Multiple Summary Functions
-    ==========================
-
-    Multiple summaries have the exact same API as regular
-    summaries which means all the above examples work
-    with no surprises.
-
-    ```
-    PrettyPandas(df).multi_summary([np.mean, np.sum],
-                                   ['Average', 'Total'],
-                                   axis=0)
-    ```
-
-    Number Formatting
-    =================
-
-    ```
-    PrettyPandas(df).as_percent()
-    PrettyPandas(df).as_money()
-    ```
-
-    ```
-    PrettyPandas(df).as_percent(precesion=3)
-    PrettyPandas(df).as_money(currency=u"$", precesion=3)
-    ```
-
-    Standard pandas indices can be used to apply formatting to areas.
-    ```
-    PrettyPandas(df).as_percent(subset=['A'])
-    ```
-
-    Issues
-    ------
-
-    * This class doesn't conform to the regular Styler.export function, which
-    means at the current time you cannot use the `export` and `style.use`
-    functions of a dataframe. Instead you can build a function which to
-    template table styles and use that to clone styles.
-
-    * Summaries are applied before formatters, which means that you can add
-    different units. PrettyPandas is simply a visual style.
-
-    * Modifying the underlying dataset ignores any performance issues. This
-    means applying formats to large dataframes could be slow and since each
-    style creates a copy of the original data memory could be an issue.
-
-    * Summaries which you might want to interact (like the intersection of two
-    np.sum functions) will not be rendered. This is a design decision because
-    most summary functions don't need to interact don't interact nicely.
-
-    * Summary functions don't take a subset argument which means that any
-    summary will be applied to every column or row.
-
     """
 
     # CSS style for header rows and column.
@@ -227,6 +145,21 @@ class PrettyPandas(Styler):
 
         return self
 
+    def total(self, title="Total", **kwargs):
+        return self.summary(np.sum, title, **kwargs)
+
+    def average(self, title="Average", **kwargs):
+        return self.summary(np.mean, title, **kwargs)
+
+    def median(self, title="Median", **kwargs):
+        return self.summary(np.median, title, **kwargs)
+
+    def max(self, title="Maximum", **kwargs):
+        return self.summary(np.max, title, **kwargs)
+
+    def min(self, title="Minimum", **kwargs):
+        return self.summary(np.min, title, **kwargs)
+
     def as_percent(self, precision=None, subset=None):
         """Represent subset of dataframe as percentages.
 
@@ -256,7 +189,7 @@ class PrettyPandas(Styler):
         """
         precision = self.precision if precision is None else precision
 
-        return self.format_cells(as_money,
+        return self.format_cells(as_unit,
                                  subset=subset,
                                  precision=precision,
                                  unit=unit,
@@ -278,10 +211,13 @@ class PrettyPandas(Styler):
         location: 'prefix' or 'suffix' indicating where the currency symbol
             should be.
         """
-        return self.as_unit(currency,
-                            precision=precision,
-                            subset=subset,
-                            location=location)
+        precision = self.precision if precision is None else precision
+
+        return self.format_cells(as_money,
+                                 currency=currency,
+                                 precision=precision,
+                                 subset=subset,
+                                 location=location)
 
     def format_cells(self, func, subset=None, **kwargs):
         """Add formatting function to cells."""
