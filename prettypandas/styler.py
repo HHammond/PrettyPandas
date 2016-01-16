@@ -9,7 +9,7 @@ import numpy as np
 from collections import namedtuple
 from itertools import product
 
-from formatters import as_percent, as_money, as_unit
+from .formatters import as_percent, as_money, as_unit
 
 
 def apply_pretty_globals():
@@ -92,6 +92,7 @@ class PrettyPandas(Styler):
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
+        self.modified = True
 
         return super(self.__class__, self).__init__(data, *args, **kwargs)
 
@@ -279,6 +280,10 @@ class PrettyPandas(Styler):
 
     def _translate(self):
         """Apply styles and formats before rendering."""
+
+        self.modified = True
         self._apply_summaries()
         self._apply_formatters()
+
         return super(self.__class__, self)._translate()
+
