@@ -19,11 +19,15 @@ Add a simple total:
 PrettyPandas(df).total()
 ```
 
+![](screenshots/1.png)
+
 Add an average:
 
 ```
 PrettyPandas(df).average()
 ```
+
+![](screenshots/2.png)
 
 Add an average across the table:
 
@@ -31,11 +35,15 @@ Add an average across the table:
 PrettyPandas(df).average(axis=1)
 ```
 
+![](screenshots/3.png)
+
 Add an average across and down the table:
 
 ```
 PrettyPandas(df).average(axis=None)
 ```
+
+![](screenshots/4.png)
 
 Summaries can be chained together:
 
@@ -43,11 +51,15 @@ Summaries can be chained together:
 PrettyPandas(df).min().max()
 ```
 
+![](screenshots/5.png)
+
 Custom functions can be used for summaries:
 
 ```
 PrettyPandas(df).summary(np.mean, "Average")
 ```
+
+![](screenshots/6.png)
 
 ### Multiple Summary Functions
 
@@ -60,6 +72,9 @@ PrettyPandas(df).multi_summary([np.mean, np.sum],
                                axis=0)
 ```
 
+![](screenshots/7.png)
+
+
 Multiple summaries have the exact same API as regular summaries which means all
 the above examples work with no surprises.
 
@@ -71,21 +86,36 @@ PrettyPandas has built in support for money, percentages, and units.
 PrettyPandas(df).as_percent()
 ```
 
+![](screenshots/8.png)
+
+
 ```
 PrettyPandas(df).as_money()
 ```
+
+![](screenshots/9.png)
+
 
 ```
 PrettyPandas(df).as_percent(precision=3)
 ```
 
+![](screenshots/10.png)
+
+
 ```
 PrettyPandas(df).as_money(currency=u"$", precision=3)
 ```
 
+![](screenshots/11.png)
+
+
 ```
 PrettyPandas(df).as_unit('cm', location='suffix')
 ```
+
+![](screenshots/12.png)
+
 
 Number formatting conforms to standard Pandas indexing and slicing:
 
@@ -93,11 +123,17 @@ Number formatting conforms to standard Pandas indexing and slicing:
 PrettyPandas(df).as_percent(subset=['A'])
 ```
 
+![](screenshots/13.png)
+
+
 Number formats will be applied to summaries as well. 
 
 ```
 PrettyPandas(df).as_percent(subset=['A']).total()
 ```
+
+![](screenshots/15.png)
+
 
 ## Issues
 
