@@ -1,4 +1,5 @@
 import copy
+from operator import itemgetter
 
 import pytest
 import numpy as np
@@ -42,20 +43,6 @@ def test_creation(dataframe):
     assert p1.formatters == []
 
 
-def test_summary(dataframe):
-    df = PrettyPandas(dataframe)
-
-    s1 = df.total(axis=0)
-    s1._translate()
-    total = dataframe.sum(axis=0)
-    assert list(s1.data.ix['Total'].values) == list(total.values)
-
-    s2 = df.total(axis=1)
-    s2._translate()
-    total = dataframe.apply(np.sum, axis=1)
-    assert [v for v in s2.data['Total'] if v != ''] == list(total)
-
-
 def test_data_safety(dataframe):
     df1 = copy.deepcopy(dataframe)
 
@@ -63,23 +50,76 @@ def test_data_safety(dataframe):
     df.total()._translate()
 
     assert all(dataframe == df1)
+    assert all(df.data == df1)
 
 
-def test_summary_fns(prettyframe):
-    prettyframe.total()
-    prettyframe.average()
-    prettyframe.median()
-    prettyframe.max()
-    prettyframe.min()
+def test_summary(dataframe):
+    p1 = PrettyPandas(dataframe).total()
+    actual = list(p1.data.sum())
 
-    prettyframe.total(axis=1)
-    prettyframe.average(axis=1)
-    prettyframe.median(axis=1)
-    prettyframe.max(axis=1)
-    prettyframe.min(axis=1)
+    r = p1._translate()
+    row = [cell for cell in r['body'][10] if cell['type'] == 'td']
+    values = [cell['value'] for cell in sorted(row, key=itemgetter('id'))]
 
-    prettyframe.total(axis=None)
-    prettyframe.average(axis=None)
-    prettyframe.median(axis=None)
-    prettyframe.max(axis=None)
-    prettyframe.min(axis=None)
+    assert values == actual
+
+
+def test_summary_fns(dataframe):
+    PrettyPandas(dataframe).total()
+    PrettyPandas(dataframe).average()
+    PrettyPandas(dataframe).median()
+    PrettyPandas(dataframe).max()
+    PrettyPandas(dataframe).min()
+
+    out = PrettyPandas(dataframe).total()
+    assert len(out.summary_rows) == 1
+    assert len(out.summary_cols) == 0
+
+    out = PrettyPandas(dataframe).total(axis=1)
+    assert len(out.summary_rows) == 0
+    assert len(out.summary_cols) == 1
+
+    out = PrettyPandas(dataframe).total(axis=None)
+    assert len(out.summary_rows) == 1
+    assert len(out.summary_cols) == 1
+
+    out = PrettyPandas(dataframe).min().max()
+    assert len(out.summary_rows) == 2
+    assert len(out.summary_cols) == 0
+
+    out = PrettyPandas(dataframe).min().max(axis=1)
+    assert len(out.summary_rows) == 1
+    assert len(out.summary_cols) == 1
+
+
+def test_as_percent(prettyframe):
+    p = prettyframe.as_percent()._translate()
+
+    cells = []
+    for row in p['body']:
+        values = [cell['value'] for cell in row if cell['type'] == 'td']
+        cells.extend(values)
+
+    assert all(c.endswith('%') for c in cells)
+
+
+def test_as_money(prettyframe):
+    p = prettyframe.as_money()._translate()
+
+    cells = []
+    for row in p['body']:
+        values = [cell['value'] for cell in row if cell['type'] == 'td']
+        cells.extend(values)
+
+    assert all(c.startswith('$') for c in cells)
+
+
+def test_as_unit(prettyframe):
+    p = prettyframe.as_unit('cm', location='suffix')._translate()
+
+    cells = []
+    for row in p['body']:
+        values = [cell['value'] for cell in row if cell['type'] == 'td']
+        cells.extend(values)
+
+    assert all(c.endswith('cm') for c in cells)
