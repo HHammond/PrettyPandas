@@ -17,15 +17,22 @@ functionality to Pandas DataFrames.
 
 ## Installation
 
-PrettyPandas isn't on PyPI yet. Expect it to be there once tests are finished. 
+PyPI package:
 
-To install PrettyPandas clone the repository and install it manually:
+```sh
+pip install prettypandas
+```
+
+
+Manual installation:
 
 ```sh
 git clone git@github.com:HHammond/PrettyPandas.git
 cd PrettyPandas
 python setup.py install
 ```
+
+Pretty Pandas supports Cython versions 2.7, 3.3, 3.4, and 3.5.
 
 ## Adding a Summary
 
