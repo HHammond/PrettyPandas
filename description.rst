@@ -1,19 +1,19 @@
-PrettyPandas
+Pretty Pandas
 =============
 
-PrettyPandas uses the new Pandas style API to add beautiful reporting
+Pretty Pandas uses the new Pandas style API to add beautiful reporting
 functionality to Pandas DataFrames.
 
 Features
 --------
 
-* Add multiple summary rows and columns.
-* A nice and customizable theme.
-* Number formatting for currency, scientific units, and percentages.
-* Chaining commands
-* Works seemlessly with `Pandas Style API<http://pandas.pydata.org/pandas-docs/stable/style.html>`_
+- Add multiple summary rows and columns.
+- A nice and customizable theme.
+- Number formatting for currency, scientific units, and percentages.
+- Chaining commands
+- Works seamlessly with `Pandas Style API <http://pandas.pydata.org/pandas-docs/stable/style.html>`_
 
-`Demo Notebook<http://nbviewer.jupyter.org/github/HHammond/PrettyPandas/blob/master/docs/PrettyPandas%20Demo.ipynb>`_
+`Demo Notebook <http://nbviewer.jupyter.org/github/HHammond/PrettyPandas/blob/master/docs/PrettyPandas%20Demo.ipynb>`_
 
 Installation
 ------------
@@ -26,7 +26,7 @@ Installation
 Documentation
 -------------
 
-See the `GitHub page<https://github.com/HHammond/PrettyPandas>`_ for
+See the `GitHub page <http://github.com/HHammond/PrettyPandas>`_ for
 documentation. 
 
 License
