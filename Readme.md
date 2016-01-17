@@ -32,7 +32,7 @@ cd PrettyPandas
 python setup.py install
 ```
 
-Pretty Pandas supports Cython versions 2.7, 3.3, 3.4, and 3.5.
+Pretty Pandas supports CPython versions 2.7, 3.3, 3.4, and 3.5.
 
 ## Adding a Summary
 
