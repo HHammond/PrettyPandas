@@ -92,7 +92,7 @@ class PrettyPandas(Styler):
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
-        self.modified = True
+        self.modified = False
 
         return super(self.__class__, self).__init__(data, *args, **kwargs)
 
@@ -135,12 +135,10 @@ class PrettyPandas(Styler):
         output = [self.data.apply(f, axis=axis, **kwargs).to_frame(t)
                   for f, t in zip(funcs, titles)]
 
-        summary_rows = self.summary_rows
-        summary_cols = self.summary_cols
         if axis == 0:
-            summary_rows += [row.T for row in output]
+            self.summary_rows += [row.T for row in output]
         elif axis == 1:
-            summary_cols += output
+            self.summary_cols += output
         else:
             ValueError("Invalid axis selected. Can only use 0, 1, or None.")
 
@@ -280,10 +278,12 @@ class PrettyPandas(Styler):
 
     def _translate(self):
         """Apply styles and formats before rendering."""
+        data = self.data.copy()
 
-        self.modified = True
         self._apply_summaries()
         self._apply_formatters()
+        result = super(self.__class__, self)._translate()
 
-        return super(self.__class__, self)._translate()
-
+        # Revert changes to inner data
+        self.data = data
+        return result

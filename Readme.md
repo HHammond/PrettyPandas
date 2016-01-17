@@ -1,5 +1,7 @@
 # Pretty Pandas
 
+![](https://travis-ci.org/HHammond/PrettyPandas.svg?branch=master)
+
 PrettyPandas uses the new Pandas style API to add beautiful reporting
 functionality to Pandas DataFrames.
 
