@@ -34,6 +34,12 @@ python setup.py install
 
 Pretty Pandas supports CPython versions 2.7, 3.3, 3.4, and 3.5.
 
+## Pretty IPython Notebooks
+
+Pretty Pandas has a magic function, `apply_pretty_globals()` which will inject HTML into the notebook which enables pretty styling of all tables. 
+
+**Warning:** the magic function injects HTML and CSS code into the notebook itself, you should be cautious of where you use it (some notebook hosts don't support CSS injection). 
+
 ## Adding a Summary
 
 PrettyPandas supports:
