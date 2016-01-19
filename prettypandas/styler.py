@@ -92,7 +92,6 @@ class PrettyPandas(Styler):
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
-        self.modified = False
 
         return super(self.__class__, self).__init__(data, *args, **kwargs)
 
