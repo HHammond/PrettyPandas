@@ -15,9 +15,11 @@ from .formatters import as_percent, as_money, as_unit
 def apply_pretty_globals():
     """Apply global CSS to make dataframes pretty.
 
-    This is advised against because Pandas now supports a built-in formatting
-    API and in order to revert this all output in a notebook needs to be
-    cleared. Instead you should use the PrettyPandas class.
+    This function injects HTML and CSS code into the notebook in order to make
+    tables look pretty. Third party hosts of notebooks advise against using
+    this and some don't support it. As long as you are okay with HTML injection
+    in your notebook, go ahead and use this. Otherwise use the ``PrettyPandas``
+    class.
     """
 
     return HTML("""
@@ -104,7 +106,7 @@ class PrettyPandas(Styler):
 
         Parameters
         ----------
-        funcs: Iterable of functions to be used for a summary.
+        func: Iterable of functions to be used for a summary.
         titles: Iterable of titles in the same order as the functions.
         axis:
             Same as numpy and pandas axis argument. A value of None will cause
@@ -169,12 +171,12 @@ class PrettyPandas(Styler):
         """
         precision = self.precision if precision is None else precision
 
-        return self.format_cells(as_percent,
+        return self._format_cells(as_percent,
                                  subset=subset,
                                  precision=precision)
 
     def as_unit(self, unit, precision=None, subset=None, location='prefix'):
-        """Represent subset of dataframe as currency.
+        """Represent subset of dataframe as a special unit.
 
         Parameters:
         -----------
@@ -187,7 +189,7 @@ class PrettyPandas(Styler):
         """
         precision = self.precision if precision is None else precision
 
-        return self.format_cells(as_unit,
+        return self._format_cells(as_unit,
                                  subset=subset,
                                  precision=precision,
                                  unit=unit,
@@ -211,13 +213,13 @@ class PrettyPandas(Styler):
         """
         precision = self.precision if precision is None else precision
 
-        return self.format_cells(as_money,
+        return self._format_cells(as_money,
                                  currency=currency,
                                  precision=precision,
                                  subset=subset,
                                  location=location)
 
-    def format_cells(self, func, subset=None, **kwargs):
+    def _format_cells(self, func, subset=None, **kwargs):
         """Add formatting function to cells."""
 
         # Create function closure for formatting operation
