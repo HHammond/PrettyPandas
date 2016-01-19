@@ -1,6 +1,8 @@
 # Pretty Pandas
 
 ![](https://travis-ci.org/HHammond/PrettyPandas.svg?branch=master)
+[![Documentation Status](http://readthedocs.org/projects/prettypandas/badge/?version=latest)](http://prettypandas.readthedocs.org/en/latest/?badge=latest)
+
 
 PrettyPandas uses the new Pandas style API to add beautiful reporting
 functionality to Pandas DataFrames.
@@ -15,6 +17,10 @@ functionality to Pandas DataFrames.
 
 [Demo Notebook](http://nbviewer.jupyter.org/github/HHammond/PrettyPandas/blob/master/docs/PrettyPandas%20Demo.ipynb)
 
+## Documentation
+
+Documentation is hosted at http://prettypandas.readthedocs.org.
+
 ## Installation
 
 PyPI package:
@@ -22,7 +28,6 @@ PyPI package:
 ```sh
 pip install prettypandas
 ```
-
 
 Manual installation:
 
@@ -174,25 +179,3 @@ PrettyPandas(df).as_percent(subset=['A']).total()
 ```
 
 ![](docs/screenshots/15.png)
-
-## Issues
-
-* This class doesn't conform to the regular Styler.export function, which
-means at the current time you cannot use the `export` and `style.use`
-functions of a dataframe. Instead you can build a function which to
-template table styles and use that to clone styles.
-
-* Modifying the underlying dataset uses a copy and ignores any performance
-issues. This means applying formats to large dataframes could be slow and
-memory could be an issue.
-
-* Summaries which you might want to interact (like the intersection of two
-totals) will not render. This is a design decision because most summary
-functions don't need to interact don't interact nicely.
-
-* Summary functions don't take a subset argument which means that any
-summary will apply to every column or row.
-
-* Number formatting fails on nulls.
-
-* No unit tests are currently implemented.
