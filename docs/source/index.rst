@@ -10,7 +10,7 @@ PrettyPandas is a Pandas DataFrame Styler class that helps you create report
 quality tables with a simple API.
 
 
-.. image:: _static/images/api@2x.png
+.. image:: _static/Images/API@2x.png
     :width: 500px
 
 
