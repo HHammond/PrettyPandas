@@ -1,26 +1,49 @@
-Pretty Pandas
-=============
+PrettyPandas
+============
 
-Pretty Pandas uses the new Pandas style API to add beautiful reporting
-functionality to Pandas DataFrames.
+PrettyPandas is a Pandas DataFrame Styler class that helps you create report
+quality tables with a simple API.
 
 Features
 --------
 
-- Add multiple summary rows and columns.
-- A nice and customizable theme.
-- Number formatting for currency, scientific units, and percentages.
-- Chaining commands
-- Works seamlessly with `Pandas Style API <http://pandas.pydata.org/pandas-docs/stable/style.html>`_
+- Add summary rows and columns. 
+- A nice and customizable theme. 
+- Number formatting for currency, scientific units, and percentages. 
+- Chaining commands. 
+- Works seamlessly with `Pandas Style API`_.
 
-`Demo Notebook <http://nbviewer.jupyter.org/github/HHammond/PrettyPandas/blob/master/docs/PrettyPandas%20Demo.ipynb>`_
+.. _Pandas Style API: http://pandas.pydata.org/pandas-docs/stable/style.html>
+
 
 Installation
 ------------
 
-::
+You can install PrettyPandas using ``pip`` with support for Python 2.7, 3.3,
+3.4, and 3.5:
+
+.. code-block:: sh
 
     pip install prettypandas
+
+
+You can also install from source:
+
+.. code-block:: sh
+
+    git clone git@github.com:HHammond/PrettyPandas.git
+    cd PrettyPandas
+    python setup.py install
+
+
+Contributing
+------------
+
+The project is available on `GitHub`_ and anyone is welcome to contribute. You
+can use the `issue tracker`_ to report issues, bugs, or suggest improvements.
+
+.. _GitHub: https://github.com/HHammond/PrettyPandas/
+.. _issue tracker: https://github.com/HHammond/PrettyPandas/issues
 
 
 Documentation
@@ -28,6 +51,7 @@ Documentation
 
 See the `GitHub page <http://github.com/HHammond/PrettyPandas>`_ for
 documentation. 
+
 
 License
 -------
