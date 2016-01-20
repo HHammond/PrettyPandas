@@ -6,19 +6,25 @@
 PrettyPandas
 ============
 
-PrettyPandas is a Pandas DataFrame Styler class which helps you create report
-quality tables.
+PrettyPandas is a Pandas DataFrame Styler class that helps you create report
+quality tables with a simple API.
 
 
-Features:
----------
+.. image:: _static/images/api@2x.png
+    :width: 500px
+
+
+Features
+--------
 
 - Add summary rows and columns. 
 - A nice and customizable theme. 
 - Number formatting for currency, scientific units, and percentages. 
 - Chaining commands. 
-- Works seamlessly with `Pandas Style API
-  <http://pandas.pydata.org/pandas-docs/stable/style.html>`_.
+- Works seamlessly with `Pandas Style API`_.
+
+.. _Pandas Style API: http://pandas.pydata.org/pandas-docs/stable/style.html>
+
 
 Installation
 ------------
@@ -39,14 +45,15 @@ You can also install from source:
     cd PrettyPandas
     python setup.py install
 
+
 Contributing
 ------------
 
-The project is available on `GitHub
-<https://github.com/HHammond/PrettyPandas/>`_ and anyone is welcome to
-contribute. You can use the `issue tracker
-<https://github.com/HHammond/PrettyPandas/issues>`_. to report issues, bugs, or
-suggest improvements.
+The project is available on `GitHub`_ and anyone is welcome to contribute. You
+can use the `issue tracker`_ to report issues, bugs, or suggest improvements.
+
+.. _GitHub: https://github.com/HHammond/PrettyPandas/
+.. _issue tracker: https://github.com/HHammond/PrettyPandas/issues
 
 Contents
 --------

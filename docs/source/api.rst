@@ -127,7 +127,7 @@ PrettyPandas
 
 
 The Magic Function
---------------
+------------------
 
 .. py:function:: apply_pretty_globals()
 
