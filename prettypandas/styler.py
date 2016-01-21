@@ -246,8 +246,8 @@ class PrettyPandas(Styler):
         summary_rownames = [series.index[0] for series in self.summary_rows]
 
         rows, cols = self.data.shape
-        ix_rows = self.data.index.shape
-        ix_cols = len(ix_rows)
+        ix_rows = self.data.index.size
+        ix_cols = len(self.data.index.names)
 
         # Add summary rows and columns
         self.data = pd.concat([self.data] + self.summary_cols,

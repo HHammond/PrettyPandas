@@ -92,27 +92,23 @@ def test_summary_fns(dataframe):
     assert len(out.summary_cols) == 1
 
 
-def test_as_percent(prettyframe):
-    p = prettyframe.as_percent()._translate()
+def test_mulitindex():
+    df = pd.DataFrame({'A': [1, 2],
+                       'B': [3, 4],
+                       'D': [4, 3],
+                       'C': [6, 7]})
 
-    cells = []
-    for row in p['body']:
-        values = [cell['value'] for cell in row if cell['type'] == 'td']
-        cells.extend(values)
+    output = PrettyPandas(df.set_index(['A', 'B'])).total(axis=1)._translate()
 
-    assert all(c.endswith('%') for c in cells)
+    for row in output['body']:
+        assert row[-1]['value'] == 10
 
-
-def test_as_money(prettyframe):
-    p = prettyframe.as_money()._translate()
-
-    cells = []
-    for row in p['body']:
-        values = [cell['value'] for cell in row if cell['type'] == 'td']
-        cells.extend(values)
-
-    assert all(c.startswith('$') for c in cells)
-
+    for style in output['table_styles']:
+        if style['selector'] == 'td:nth-child(5)':
+            assert True
+            break
+    else:
+        assert False
 
 def test_as_unit(prettyframe):
     p = prettyframe.as_unit('cm', location='suffix')._translate()
