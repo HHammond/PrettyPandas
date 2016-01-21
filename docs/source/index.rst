@@ -62,7 +62,7 @@ Contents
    :maxdepth: 2
 
    Getting Started <quickstart>
-   api
+   API <prettypandas>
    testing
 
 Indices and tables

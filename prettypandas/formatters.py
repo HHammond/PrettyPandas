@@ -1,5 +1,13 @@
 from numbers import Number, Integral
 from functools import partial
+import locale
+import warnings
+
+from babel import Locale, numbers
+
+
+LOCALE, ENCODING = locale.getlocale()
+LOCALE_OBJ = Locale(LOCALE or "en_US")
 
 
 def format_number(v, number_format, prefix='', suffix=''):
@@ -17,8 +25,8 @@ def as_percent(v, precision=2):
 
     Parameters:
     -----------
-    v: numerical value to be converted
-    precision: int
+    :param v: numerical value to be converted
+    :param precision: int
         decimal places to round to
     """
     if not isinstance(precision, Integral):
@@ -32,11 +40,11 @@ def as_unit(v, unit, precision=2, location='suffix'):
 
     Parameters:
     -----------
-    v: numerical value
-    unit: string of unit
-    precision: int
+    :param v: numerical value
+    :param unit: string of unit
+    :param precision: int
         decimal places to round to
-    location:
+    :param location:
         'prefix' or 'suffix' representing where the currency symbol falls
         relative to the value
     """
@@ -53,17 +61,30 @@ def as_unit(v, unit, precision=2, location='suffix'):
     return formatter(v, "0.{}f".format(precision))
 
 
+as_percent = partial(numbers.format_percent,
+                     locale=LOCALE_OBJ)
+"""Format number as percentage."""
+
+as_currency = partial(numbers.format_currency,
+                      currency='USD',
+                      locale=LOCALE_OBJ)
+"""Format number as currency."""
+
+
 def as_money(v, precision=2, currency='$', location='prefix'):
-    """Convert value to currency.
+    """[DEPRECATED] Convert value to currency.
 
     Parameters:
     -----------
-    v: numerical value
-    precision: int
+    :param v: numerical value
+    :param precision: int
         decimal places to round to
-    currency: string representing currency
-    location:
+    :param currency: string representing currency
+    :param location:
         'prefix' or 'suffix' representing where the currency symbol falls
         relative to the value
     """
+    warnings.warn("Depricated in favour of `as_currency`.",
+                  DeprecationWarning)
+
     return as_unit(v, currency, precision=precision, location=location)
