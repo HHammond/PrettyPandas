@@ -37,11 +37,11 @@ can use multiple summaries without any headaches.
 
 The builtin summary methods are:
 
-* :py:meth:`total <PrettyPandas.total>`
-* :py:meth:`average <PrettyPandas.average>`
-* :py:meth:`median <PrettyPandas.median>`
-* :py:meth:`min <PrettyPandas.min>`
-* :py:meth:`max <PrettyPandas.max>`
+* :py:meth:`total <prettypandas.PrettyPandas.total>`
+* :py:meth:`average <prettypandas.PrettyPandas.average>`
+* :py:meth:`median <prettypandas.PrettyPandas.median>`
+* :py:meth:`min <prettypandas.PrettyPandas.min>`
+* :py:meth:`max <prettypandas.PrettyPandas.max>`
 
 The above functions work nicely on your table, if you wanted to add a grand
 total to the bottom of your table the code is simple:
@@ -77,7 +77,7 @@ You can even mix and match summaries applied to different axis.
 Creating a Custom Summary
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :py:meth:`summary <PrettyPandas.summary>` method creates a custom summary
+The :py:meth:`summary <prettypandas.PrettyPandas.summary>` method creates a custom summary
 from a function which takes an array-like structure as a list.
 
 .. code-block:: python
@@ -97,44 +97,37 @@ Formatting Numbers
 Most reports use at least some units of measurement. PrettyPandas currently 
 supports percentages, money, and a more general unit method.
 
-* :py:meth:`as_percent <PrettyPandas.as_percent>`
-* :py:meth:`as_money <PrettyPandas.as_money>`
-* :py:meth:`as_unit <PrettyPandas.as_unit>`
+* :py:meth:`as_percent <prettypandas.PrettyPandas.as_percent>`
+* :py:meth:`as_currency <prettypandas.PrettyPandas.as_currency>`
+* :py:meth:`as_unit <prettypandas.PrettyPandas.as_unit>`
 
 The ``as_unit`` method takes a positional ``unit`` argument which indicates the
 string representing the unit to be used and a ``location`` argument to specify
 whether the unit should be a prefix or suffix to the value. 
+
+The ``as_currency`` and ``as_percent`` methods are localized to use whatever
+units your Python distribution thinks are best for you. If you aren't getting
+the correct units use the :py:meth:`set_locale
+<prettypandas.PrettyPandas.set_locale>` method to specify your locale. 
+
+If you need to use a different currency, just pass it to ``currency='...'`` to
+change it.
 
 The ``as_money`` method takes optional ``currency`` and ``location`` arguments
 which work just like the ``as_unit`` method. By default the currency is in
 dollars. 
 
 .. note:: 
-    Many currency symbols are unicode characters, which means Python 2 doesn't
-    support them by default. You can use `unicode literals`_ (e.g. ``u'€'``) or
-    import the unicode literal behaviour from Python 3:
+    Python 2 doesn't support unicode literals by default. You can use `unicode
+    literals`_ (e.g. ``u'€'``) or import the unicode literal behaviour from
+    Python 3:
 
     .. code-block:: python
         
         from __future__ import unicode_literals
 
-    The same goes for ``as_unit``.
 
 .. _unicode literals: https://docs.python.org/2/howto/unicode.html#unicode-literals-in-python-source-code
-
-Decimal Precision
-^^^^^^^^^^^^^^^^^
-
-Number formatters will default to the decimal precision of the PrettyPandas
-object, however precision can be specified manually with the ``precision``
-argument.
-
-.. code-block:: python
-
-    PrettyPandas(df).as_money(precision=2)
-
-.. image:: _static/Images/format_all@2x.png
-    :width: 214px
 
 
 Formatting Columns

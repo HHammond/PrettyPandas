@@ -110,6 +110,40 @@ def test_mulitindex():
     else:
         assert False
 
+
+def test_as_percent(prettyframe):
+    p = prettyframe.as_percent()._translate()
+
+    cells = []
+    for row in p['body']:
+        values = [cell['value'] for cell in row if cell['type'] == 'td']
+        cells.extend(values)
+
+    assert all(c.endswith('%') for c in cells)
+
+
+def test_as_currency(prettyframe):
+    p = prettyframe.as_currency(locale='en_US', currency='USD')._translate()
+
+    cells = []
+    for row in p['body']:
+        values = [cell['value'] for cell in row if cell['type'] == 'td']
+        cells.extend(values)
+
+    assert all(c.startswith('$') or c.startswith('-$') for c in cells)
+
+
+def test_as_money(prettyframe):
+    p = prettyframe.as_money()._translate()
+
+    cells = []
+    for row in p['body']:
+        values = [cell['value'] for cell in row if cell['type'] == 'td']
+        cells.extend(values)
+
+    assert all(c.startswith('$') for c in cells)
+
+
 def test_as_unit(prettyframe):
     p = prettyframe.as_unit('cm', location='suffix')._translate()
 

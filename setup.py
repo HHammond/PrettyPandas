@@ -44,6 +44,7 @@ setup(
     packages=["prettypandas"],
 
     install_requires=[
+        "babel",
         "ipython",
         "numpy",
         "jinja2",
