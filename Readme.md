@@ -2,6 +2,8 @@
 
 ![Testing Status](https://travis-ci.org/HHammond/PrettyPandas.svg?branch=master)
 [![Documentation Status](http://readthedocs.org/projects/prettypandas/badge/?version=latest)](http://prettypandas.readthedocs.org/en/latest/?badge=latest)
+![Supported Versions](https://img.shields.io/pypi/pyversions/prettypandas.svg)
+![PyPI](https://img.shields.io/pypi/l/prettypandas.svg)
 
 PrettyPandas is a Pandas DataFrame Styler class that helps you create
 report quality tables with a simple API.
