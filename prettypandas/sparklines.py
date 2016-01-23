@@ -47,18 +47,18 @@ class Sparkline(object):
 
           class="line"
           fill="transparent"
-          stroke="black" />
+          stroke="{{ line_color }}" />
 
           {% if not show_max and not show_min %}
-            {{ circle(points[-1][0], points[-1][1], "black", class="end") }}
+            {{ circle(points[-1][0], points[-1][1], line_color, class="end") }}
           {% endif %}
 
           {% for x, y in maxs %}
-            {{ circle(x, y, "green", class="max", r=2)}}
+            {{ circle(x, y, max_color, class="max", r=2)}}
           {% endfor %}
 
           {% for x, y in mins -%}
-            {{ circle(x, y, "red", class="min", r=2)}}
+            {{ circle(x, y, min_color, class="min", r=2)}}
           {%- endfor %}
 
         </svg>
@@ -71,7 +71,11 @@ class Sparkline(object):
                  height_offset=2,
                  width_offset=2,
                  show_max=True,
-                 show_min=True):
+                 show_min=True,
+                 min_color="red",
+                 max_color="green",
+                 line_color="black",
+                ):
         self.data = np.array(data)
         self.width = width
         self.height = height
@@ -79,6 +83,10 @@ class Sparkline(object):
         self.width_offset = width_offset
         self.show_max = show_max
         self.show_min = show_min
+
+        self.min_color = min_color
+        self.max_color = max_color
+        self.line_color = line_color
 
     def _repr_html_(self):
         return self.render()
@@ -108,7 +116,10 @@ class Sparkline(object):
                                maxs=maxs,
                                mins=mins,
                                show_max=self.show_max,
-                               show_min=self.show_min)
+                               show_min=self.show_min,
+                               min_color=self.min_color,
+                               max_color=self.max_color,
+                               line_color=self.line_color)
 
     def _get(self, xs, ys, ixs):
         """Get points based on index."""
