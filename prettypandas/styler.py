@@ -12,6 +12,7 @@ from functools import partial
 import warnings
 
 from .formatters import as_percent, as_money, as_unit, as_currency, LOCALE_OBJ
+from .sparklines import build_sparkline
 
 
 def apply_pretty_globals():
@@ -201,6 +202,22 @@ class PrettyPandas(Styler):
         :param kwargs: Keyword arguments passed to ``numpy.min``.
         """
         return self.summary(np.min, title, **kwargs)
+
+    def sparkline(self, title="", **kwargs):
+        """Add a sparkline summary to this table.
+
+        Parameters:
+        -----------
+        :param title: Title for sparkline
+        :param data: Dataframe to use for building sparklines
+        :param axis: pandas axis to apply sparkline on
+        :param width: width of sparkline
+        :param height: height of sparkline
+        :param show_max: boolean to show dots at max values
+        :param show_min: boolean to show dots at min values
+        """
+
+        return self.summary(build_sparkline, title, **kwargs)
 
     def as_percent(self, subset=None, precision=None, locale=None):
         """Represent subset of dataframe as percentages.

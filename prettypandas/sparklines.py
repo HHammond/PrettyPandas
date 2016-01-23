@@ -2,6 +2,10 @@ from jinja2 import Template
 import numpy as np
 
 
+def build_sparkline(values, **kwargs):
+    return Sparkline(np.array(values), **kwargs)
+
+
 class Sparkline(object):
     """SVG Sparkline from numpy array.
 
