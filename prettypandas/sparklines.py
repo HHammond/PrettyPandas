@@ -41,9 +41,8 @@ class Sparkline(object):
              xmlns="http://www.w3.org/2000/svg">
 
           <polyline points="
-            {%- for x, y in points -%}
-                {{ x }} {{ y }},
-            {%- endfor -%}"
+            {% for x, y in points %}{{ x }},{{ y }} {% endfor %}
+            "
 
           class="line"
           fill="transparent"
@@ -74,8 +73,7 @@ class Sparkline(object):
                  show_min=True,
                  min_color="red",
                  max_color="green",
-                 line_color="black",
-                ):
+                 line_color="black"):
         self.data = np.array(data)
         self.width = width
         self.height = height
