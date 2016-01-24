@@ -186,7 +186,7 @@ class PrettyPandas(Styler):
         """
         return self.summary(np.min, title, **kwargs)
 
-    def sparkline(self, title="", **kwargs):
+    def sparkline(self, title="", datasource=None, **kwargs):
         """Add a sparkline summary to this table.
 
         Parameters:
