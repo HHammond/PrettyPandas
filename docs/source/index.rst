@@ -62,6 +62,7 @@ Contents
    :maxdepth: 2
 
    Getting Started <quickstart>
+   sparklines
    API <prettypandas>
    testing
 

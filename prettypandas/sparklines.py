@@ -7,7 +7,7 @@ def build_sparkline(values, **kwargs):
 
 
 SVG_BASE_TEMPLATE = Template("""
-    {% block svg_outer -%}
+    {%- block svg_outer -%}
         <svg width="{{width}}"
              height="{{height}}"
              class="{{ class if class else 'svg' }}"
@@ -15,9 +15,9 @@ SVG_BASE_TEMPLATE = Template("""
              xmlns="http://www.w3.org/2000/svg"
              >
           {%- block svg_inner -%}
-          {%- endblock -%}
+          {% endblock %}
         </svg>
-    {%- endblock %}
+    {% endblock %}
     """)
 
 SVG_MACROS = Template("""
@@ -38,51 +38,62 @@ class Sparkline(object):
     :param data:
         Array data to be used for line
     :param width: default 150px
-        width of svg
+        Width of svg
     :param height: default 20px
-        height of svg
+        Height of svg
     :param height_offset:
-        offset from top/bottom to line
+        Offset from top/bottom to line
     :param width_offset:
-        offset from sides to lines
+        Offset from sides to lines
     :param show_max:
-        show green dot indicating maximums
+        Show green dot indicating maximums
     :param show_min:
-        show red dot indicating minimums
+        Show red dot indicating minimums
+    :param min_color:
+        Color of dot representing minimum value
+    :param max_color:
+        Color of dot representing maximum value
+    :param line_color:
+        Color of lines
+    :param ymin:
+        Minimum y value on scale
+    :param ymax:
+        Maximum y value on scale
     """
 
     # flake8: noqa
     TEMPLATE = """
-    {% from SVG_MACROS import circle %}
+        {% from SVG_MACROS import circle %}
 
-    {% block svg_inner -%}
+        {% block svg_inner -%}
 
-          <polyline points="{%- for x, y in points -%}
-                {{ x }},{{ y }}{{ ' ' }}
+            <polyline points="
+            {%- for x, y in points -%}
+              {{ x }},{{ y }}{{ ' ' }}
             {%- endfor -%} "
-          class="line"
-          fill="transparent"
-          stroke="{{ line_color }}"
-          />
+            class="line"
+            fill="transparent"
+            stroke="{{ line_color }}"
+            />
 
-          {%- if not show_max and not show_min -%}
-            {{ circle(points[-1][0],
-                      points[-1][1],
-                      line_color,
-                      class="end",
-                      r=height_offset)
-            }}
-          {%- endif -%}
+            {%- if not show_max and not show_min -%}
+              {{ circle(points[-1][0],
+                        points[-1][1],
+                        line_color,
+                        class="end",
+                        r=height_offset)
+              }}
+            {%- endif -%}
 
-          {%- for x, y in maxs -%}
-            {{ circle(x, y, max_color, class="max", r=height_offset) }}
-          {% endfor %}
+            {%- for x, y in maxs -%}
+              {{ circle(x, y, max_color, class="max", r=height_offset) }}
+            {% endfor %}
 
-          {%- for x, y in mins -%}
-            {{ circle(x, y, min_color, class="min", r=height_offset) }}
-          {% endfor %}
+            {%- for x, y in mins -%}
+              {{ circle(x, y, min_color, class="min", r=height_offset) }}
+            {% endfor %}
 
-      {%- endblock %}
+        {%- endblock %}
     """
 
     @property
@@ -219,15 +230,21 @@ class Sparkline(object):
 
 
 class MultiSparkline(object):
+    """MultiSparkline class used to stack Sparklines on the same axis
+
+    Parameters:
+    -----------
+    :param values: List of Sparkline objects
+    """
 
     TEMPLATE = Template("""
-    {% extends SVG_BASE_TEMPLATE %}
+        {% extends SVG_BASE_TEMPLATE %}
 
-    {% block svg_inner %}
-        {% for sparkline in sparklines -%}
-            {{ sparkline }}
-        {%- endfor %}
-    {% endblock %}
+        {% block svg_inner %}
+            {% for sparkline in sparklines -%}
+                {{ sparkline }}
+            {%- endfor %}
+        {% endblock %}
     """)
 
     def __init__(self, values=None):

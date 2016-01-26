@@ -1,0 +1,6 @@
+.. sparklines
+
+Sparklines
+==========
+
+

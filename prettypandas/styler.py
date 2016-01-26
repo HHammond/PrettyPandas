@@ -198,6 +198,18 @@ class PrettyPandas(Styler):
         :param height: height of sparkline
         :param show_max: boolean to show dots at max values
         :param show_min: boolean to show dots at min values
+        :param ymin: Minimum y value on scale
+        :param ymax: Maximum y value on scale
+
+        :param height_offset: Offset from top/bottom to line
+        :param width_offset: Offset from sides to lines
+        :param show_max: Show green dot indicating maximums
+        :param show_min: Show red dot indicating minimums
+        :param min_color: Color of dot representing minimum value
+        :param max_color: Color of dot representing maximum value
+        :param line_color: Color of lines
+
+        See :py:meth:`prettypandas.Sparkline` for more options.
         """
         return self.summary(build_sparkline, title, **kwargs)
 
