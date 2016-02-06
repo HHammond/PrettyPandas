@@ -41,4 +41,4 @@ python setup.py install
 Documentation
 -------------
 
-Documentation is hosted on [Read the Docs](http://prettypandas.readthedocs.org).
+Documentation hosted on [Read the Docs](http://prettypandas.readthedocs.org).

@@ -12,5 +12,6 @@ Submodules
 .. toctree::
 
    prettypandas.formatters
+   prettypandas.sparklines
    prettypandas.styler
 

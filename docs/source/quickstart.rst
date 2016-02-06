@@ -58,7 +58,7 @@ And if you want to mix and match summaries:
 .. code-block:: python
 
     PrettyPandas(df).total().average()
-    
+
 .. image:: _static/Images/average@2x.png
     :width: 334px
 
@@ -94,7 +94,7 @@ from a function which takes an array-like structure as a list.
 Formatting Numbers
 ------------------
 
-Most reports use at least some units of measurement. PrettyPandas currently 
+Most reports use at least some units of measurement. PrettyPandas currently
 supports percentages, money, and a more general unit method.
 
 * :py:meth:`as_percent <prettypandas.PrettyPandas.as_percent>`
@@ -103,27 +103,27 @@ supports percentages, money, and a more general unit method.
 
 The ``as_unit`` method takes a positional ``unit`` argument which indicates the
 string representing the unit to be used and a ``location`` argument to specify
-whether the unit should be a prefix or suffix to the value. 
+whether the unit should be a prefix or suffix to the value.
 
 The ``as_currency`` and ``as_percent`` methods are localized to use whatever
 units your Python distribution thinks are best for you. If you aren't getting
 the correct units use the :py:meth:`set_locale
-<prettypandas.PrettyPandas.set_locale>` method to specify your locale. 
+<prettypandas.PrettyPandas.set_locale>` method to specify your locale.
 
 If you need to use a different currency, just pass it to ``currency='...'`` to
 change it.
 
 The ``as_money`` method takes optional ``currency`` and ``location`` arguments
 which work just like the ``as_unit`` method. By default the currency is in
-dollars. 
+dollars.
 
-.. note:: 
+.. note::
     Python 2 doesn't support unicode literals by default. You can use `unicode
     literals`_ (e.g. ``u'€'``) or import the unicode literal behaviour from
     Python 3:
 
     .. code-block:: python
-        
+
         from __future__ import unicode_literals
 
 
@@ -133,9 +133,9 @@ dollars.
 Formatting Columns
 ^^^^^^^^^^^^^^^^^^
 
-By default the formatting methods apply to the entire dataframe. When you need 
-to format just a few columns you can use the `subset` argument to specify a 
-single column, or multiple columns. 
+By default the formatting methods apply to the entire dataframe. When you need
+to format just a few columns you can use the ``subset`` argument to specify a
+single column, or multiple columns.
 
 .. code-block:: python
 
@@ -154,8 +154,8 @@ single column, or multiple columns.
 Formatting Rows and Complex Formatting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Formatting rows is more complicated than formatting columns. The `subset` 
-argument needs to take in a `pandas.Index` to specify the row. 
+Formatting rows is more complicated than formatting columns. The `subset`
+argument needs to take in a ``pandas.IndexSlice`` to specify the row.
 
 .. code-block:: python
 
@@ -188,7 +188,17 @@ For more info on Pandas indexing, read `Pandas Indexing`_ and `Pandas Advanced
 Indexing`_.
 
 .. _Pandas Indexing: http://pandas.pydata.org/pandas-docs/stable/indexing.html
-.. _Pandas Advanced Indexing: http://pandas.pydata.org/pandas-docs/stable/advanced.html
+.. _Pandas Advanced Indexing:
+    http://pandas.pydata.org/pandas-docs/stable/advanced.html
+
+Hiding Rows and Columns
+-----------------------
+
+When you need to include data in summaries but don't want it displayed,
+the :py:meth:`hide <prettypandas.PrettyPandas.hide>` will include data in
+summaries, but exclude it from display. It will hide the pandas subset on the
+axis specified.
+
 
 The Magic Function
 ------------------

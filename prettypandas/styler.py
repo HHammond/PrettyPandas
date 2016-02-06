@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-from IPython.display import HTML
 from pandas.core.style import Styler
 from pandas.core.indexing import _non_reducing_slice
 import pandas as pd
@@ -12,40 +11,11 @@ from functools import partial
 import warnings
 
 from .formatters import as_percent, as_money, as_unit, as_currency, LOCALE_OBJ
-
-
-def apply_pretty_globals():
-    """Apply global CSS to make dataframes pretty.
-
-    This function injects HTML and CSS code into the notebook in order to make
-    tables look pretty. Third party hosts of notebooks advise against using
-    this and some don't support it. As long as you are okay with HTML injection
-    in your notebook, go ahead and use this. Otherwise use the ``PrettyPandas``
-    class.
-    """
-
-    return HTML("""
-        <style type='text/css'>
-            /* Pretty Pandas Dataframes */
-            .dataframe * {border-color: #c0c0c0 !important;}
-            .dataframe th{background: #eee;}
-            .dataframe td{
-                background: #fff;
-                text-align: right;
-                min-width:5em;
-            }
-
-            /* Format summary rows */
-            .dataframe-summary-row tr:last-child,
-            .dataframe-summary-col td:last-child{
-                background: #eee;
-                font-weight: 500;
-            }
-        </style>
-        """)
+from .sparklines import build_sparkline
 
 
 Formatter = namedtuple("Formatter", "subset, function")
+HiddenIndex = namedtuple("HiddenIndex", "subset, axis")
 
 
 class PrettyPandas(Styler):
@@ -98,6 +68,7 @@ class PrettyPandas(Styler):
                  summary_rows=None,
                  summary_cols=None,
                  formatters=None,
+                 hidden_indexes=None,
                  *args,
                  **kwargs):
 
@@ -106,6 +77,7 @@ class PrettyPandas(Styler):
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
+        self.hidden_indexes = hidden_indexes or []
 
         return super(self.__class__, self).__init__(data, *args, **kwargs)
 
@@ -117,6 +89,18 @@ class PrettyPandas(Styler):
     def _append_selector(self, selector, *props):
         """Add a CSS selector and style to this Styler."""
         self.table_styles.append({'selector': selector, 'props': props})
+
+    def hide(self, index, axis=0):
+        """Set row or column to be dropped from display.
+
+        Parameters
+        ----------
+        :param index: Pandas subset to be hidden
+        :param axis: Pandas axis to drop subset on
+        """
+        ix = HiddenIndex(index, axis)
+        self.hidden_indexes.append(ix)
+        return self
 
     def summary(self, func=np.sum, title='Total', axis=0, **kwargs):
         """Add multiple summary rows or columns to the dataframe.
@@ -202,6 +186,33 @@ class PrettyPandas(Styler):
         """
         return self.summary(np.min, title, **kwargs)
 
+    def sparkline(self, title="", datasource=None, **kwargs):
+        """Add a sparkline summary to this table.
+
+        Parameters:
+        -----------
+        :param title: Title for sparkline
+        :param data: Dataframe to use for building sparklines
+        :param axis: pandas axis to apply sparkline on
+        :param width: width of sparkline
+        :param height: height of sparkline
+        :param show_max: boolean to show dots at max values
+        :param show_min: boolean to show dots at min values
+        :param ymin: Minimum y value on scale
+        :param ymax: Maximum y value on scale
+
+        :param height_offset: Offset from top/bottom to line
+        :param width_offset: Offset from sides to lines
+        :param show_max: Show green dot indicating maximums
+        :param show_min: Show red dot indicating minimums
+        :param min_color: Color of dot representing minimum value
+        :param max_color: Color of dot representing maximum value
+        :param line_color: Color of lines
+
+        See :py:meth:`prettypandas.Sparkline` for more options.
+        """
+        return self.summary(build_sparkline, title, **kwargs)
+
     def as_percent(self, subset=None, precision=None, locale=None):
         """Represent subset of dataframe as percentages.
 
@@ -250,7 +261,7 @@ class PrettyPandas(Styler):
         :param subset: Pandas slice to convert to percentages
         :param precision: int
             Number of decimal places to round to
-        :param location: 'prefix' or 'suffix' indicating where the currency symbol
+        :param location: 'prefix' or 'suffix' indicating where the unit
             should be.
         """
         precision = self.precision if precision is None else precision
@@ -260,7 +271,6 @@ class PrettyPandas(Styler):
                                   precision=precision,
                                   unit=unit,
                                   location=location)
-
 
     def as_money(self,
                  subset=None,
@@ -293,6 +303,7 @@ class PrettyPandas(Styler):
                                       precision=precision,
                                       subset=subset,
                                       location=location)
+        return self
 
     def _format_cells(self, func, subset=None, **kwargs):
         """Add formatting function to cells."""
@@ -312,7 +323,6 @@ class PrettyPandas(Styler):
             else:
                 subset = _non_reducing_slice(subset)
             self.data.loc[subset] = self.data.loc[subset].applymap(function)
-        return self
 
     def _apply_summaries(self):
         """Add all summary rows and columns."""
@@ -321,8 +331,6 @@ class PrettyPandas(Styler):
         summary_rownames = [series.index[0] for series in self.summary_rows]
 
         rows, cols = self.data.shape
-        ix_rows = self.data.index.size
-        ix_cols = len(self.data.index.names)
 
         # Add summary rows and columns
         self.data = pd.concat([self.data] + self.summary_cols,
@@ -332,17 +340,6 @@ class PrettyPandas(Styler):
                               axis=0,
                               ignore_index=False)
 
-        # Update CSS styles
-        for i, _ in enumerate(self.summary_rows):
-            index = rows + i + 1
-            self._append_selector('tr:nth-child({})'.format(index),
-                                  *self.SUMMARY_PROPERTIES)
-
-        for i, _ in enumerate(self.summary_cols):
-            index = cols + ix_cols + i + 1
-            self._append_selector('td:nth-child({})'.format(index),
-                                  *self.SUMMARY_PROPERTIES)
-
         # Sort column names
         self.data = self.data[colnames + summary_colnames]
 
@@ -350,14 +347,37 @@ class PrettyPandas(Styler):
         for row, col in product(summary_rownames, summary_colnames):
             self.data.loc[row, col] = ''
 
-        return self
+    def _apply_summary_formats(self):
+        rows, cols = self.data.shape
+        ix_cols = len(self.data.index.names)
+
+        for i, _ in enumerate(self.summary_rows):
+            self._append_selector('tr:nth-last-child({})'.format(i + 1),
+                                  *self.SUMMARY_PROPERTIES)
+
+        for i, _ in enumerate(self.summary_cols):
+            self._append_selector('td:nth-last-child({})'.format(i + 1),
+                                  *self.SUMMARY_PROPERTIES)
+
+    def _apply_hidden_indexes(self):
+        """Hide indexes marked to be hidden."""
+        for ix, axis in self.hidden_indexes:
+            if axis == 1:
+                cols = [c for c  in self.data.columns
+                        if c not in self.data.columns[ix]]
+                self.data = self.data[cols]
+            else:
+                self.data.drop(ix, axis=axis, inplace=True)
 
     def _translate(self):
         """Apply styles and formats before rendering."""
-        data = self.data.copy()
+        data = self.data.copy(deep=True)
 
         self._apply_summaries()
         self._apply_formatters()
+        self._apply_hidden_indexes()
+        self._apply_summary_formats()
+
         result = super(self.__class__, self)._translate()
 
         # Revert changes to inner data
