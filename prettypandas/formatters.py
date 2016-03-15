@@ -66,7 +66,7 @@ def as_unit(v, unit, precision=2, location='suffix', **kwargs):
 
     return formatter(v, "0.{}f".format(precision))
 
-#disable use of babel for percentages so we can control precision (not implemented by original author in github repo)
+#disable use of babel for percentages so we can control precision
 #as_percent = partial(numbers.format_percent,
 #                     locale=LOCALE_OBJ)
 #"""Format number as percentage."""
