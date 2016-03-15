@@ -225,7 +225,7 @@ class PrettyPandas(Styler):
         """
         return self.summary(np.min, title, **kwargs)
 
-    def as_percent(self, subset=None, precision=None, **kwargs):
+    def as_percent(self, subset=None, precision=0, **kwargs):
         """Represent subset of dataframe as percentages.
 
         Parameters:
