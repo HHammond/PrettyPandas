@@ -12,7 +12,7 @@ from functools import partial
 from numbers import Number
 import warnings
 
-from .formatters import as_percent, as_money, as_unit, as_currency, LOCALE_OBJ
+from .formatters import PERCENT_FORMATTERS, as_money, as_unit, as_currency, LOCALE_OBJ
 
 
 def apply_pretty_globals():
@@ -47,15 +47,7 @@ def apply_pretty_globals():
 
 
 Formatter = namedtuple("Formatter", "subset, function")
-remove_nan_formatter = lambda x: '' if x == np.nan else x
 
-def PrettyPandasNoIndex(dataframe, table_styles = [], *args, **kwargs):
-    return PrettyPandas(dataframe, 
-                        *args, 
-                        table_styles = table_styles + [{'selector': '.row_heading', 'props': [('display', 'none')]}, 
-                                                       {'selector': '.blank', 'props': [('display', 'none')]}],
-                        **kwargs)
-                        
 class PrettyPandas(Styler):
     """Pretty pandas dataframe Styles.
 
@@ -162,7 +154,9 @@ class PrettyPandas(Styler):
 
         output = []
         if axis == 0:
-            df = self.data.transpose() #use df to iterate over the rows of the transpose of self.data (i.e. cols of self.data)
+            #use df to iterate over rows of the transpose of self.data below
+            #(i.e. cols of self.data)
+            df = self.data.transpose() 
         else:
             df = self.data
             
@@ -171,10 +165,15 @@ class PrettyPandas(Styler):
             
         for f, t in zip(funcs, titles):
             if subset is None:
-                output.append(self.data.apply(f, axis=axis, **kwargs).to_frame(t)) #apply returns Series, to_frame converts to DataFrame
+                #apply returns Series, to_frame converts to DataFrame
+                output.append(self.data.apply(f, axis=axis, **kwargs)
+                                       .to_frame(t)) 
             elif subset is not None:
-                summary_vals = [f(vals, **kwargs) if item_name in subset else None for item_name, vals in df.iterrows()]
-                output.append(pd.DataFrame(data = {t: summary_vals}, index = df.index))  #dataframe with column name t and values summary_vals
+                summary_vals = [f(vals, **kwargs) if item_name in subset 
+                                else None for item_name, vals in df.iterrows()]
+                #dataframe with column name t and values summary_vals
+                output.append(pd.DataFrame(data = {t: summary_vals}, 
+                                           index = df.index))  
 
         if axis == 0:
             self.summary_rows += [row.T for row in output]
@@ -235,11 +234,26 @@ class PrettyPandas(Styler):
             Number of decimal places to round to
         """
 
-        return self._format_cells(as_percent,
+        return self._format_cells(PERCENT_FORMATTERS['format_fn'],
                                   subset=subset, 
                                   precision=precision,
                                   **kwargs)
 
+    @classmethod
+    def set_percent_formatter(formatter = 'as_percent_babel'):
+        """Set the formatting function used for percentages
+
+        Parameters:
+        -----------
+        :param formatter str or callable: 
+            A string selecting a formatting function from 
+            PERCENT_FORMATTERS['formatters'] (current options are 'as_percent_babel'
+            or 'as_percent_with_precision'), or a function that can be used for
+            percent formatting.
+        """        
+        PERCENT_FORMATTERS['format_fn'] = \
+            PERCENT_FORMATTERS['formatters'].get(formatter, formatter)
+            
     def as_currency(self, subset=None, currency='USD', locale=None, **kwargs):
         """Represent subset of dataframe as currency.
 
@@ -319,8 +333,9 @@ class PrettyPandas(Styler):
     def _format_cells(self, func, subset=None, **kwargs):
         """Add formatting function to cells."""
 
-        if self.replace_all_nans_with is not None and 'replace_nan_with' not in kwargs:
-            kwargs = dict(replace_nan_with = self.replace_all_nans_with, **kwargs)
+        if self.replace_all_nans_with is not None \
+            and 'replace_nan_with' not in kwargs:
+            kwargs['replace_nan_with'] = self.replace_all_nans_with
 
         # Create function closure for formatting operation
         def fn(*args):
@@ -395,3 +410,21 @@ class PrettyPandas(Styler):
                     if isinstance(v, Number) and np.isnan(v):
                         cell['value'] = self.replace_all_nans_with 
         return result
+
+
+class PrettyPandasNoIndex(PrettyPandas):
+    """Subclass of PrettyPandas that hides the Index using CSS.
+    
+    Constructor accepts all parameters provided by PrettyPandas
+    """    
+    _no_index_styles = [
+        {'selector': '.row_heading', 'props': [('display', 'none')]},
+        {'selector': '.blank', 'props': [('display', 'none')]}
+    ]    
+
+    def __init__(self, dataframe, table_styles=[], *args, **kwargs):
+        super(PrettyPandasNoIndex, self) \
+            .__init__(dataframe,
+                      *args,
+                      table_styles = table_styles + self._no_index_styles,
+                      **kwargs)

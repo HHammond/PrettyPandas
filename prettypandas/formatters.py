@@ -24,7 +24,7 @@ def format_number(v, number_format, prefix='', suffix='', replace_nan_with=None)
         raise TypeError("Numberic type required.")
 
 
-def as_percent(v, precision=2, scale_1_as_100_percent = True, **kwargs):
+def as_percent_with_precision(v, precision=2, scale_1_as_100_percent = True, **kwargs):
     """Convert number to percentage string.
 
     Parameters:
@@ -32,6 +32,9 @@ def as_percent(v, precision=2, scale_1_as_100_percent = True, **kwargs):
     :param v: numerical value to be converted
     :param precision: int
         decimal places to round to
+    :param scale_1_as_100_percent: boolean
+        By default the value 1 is converted to 100%.
+        Set this to False to indicate that 100 converts to 100%.
     """
     if not isinstance(precision, Integral):
         raise TypeError("Precision must be an integer.")
@@ -66,10 +69,19 @@ def as_unit(v, unit, precision=2, location='suffix', **kwargs):
 
     return formatter(v, "0.{}f".format(precision))
 
-#disable use of babel for percentages so we can control precision
-#as_percent = partial(numbers.format_percent,
-#                     locale=LOCALE_OBJ)
-#"""Format number as percentage."""
+def as_percent_babel(val, precision = None, *args, **kwargs): 
+    """Format number as percentage using babel."""
+    #n.b. swallow the precision parameter as we can't pass it to format_percent
+    return numbers.format_percent(val, locale=LOCALE_OBJ, *args, **kwargs)
+
+
+PERCENT_FORMATTERS = dict(
+    format_fn = as_percent_babel,
+    formatters = dict(
+        as_percent_babel = as_percent_babel,
+        as_percent_with_precision = as_percent_with_precision
+    )
+)
 
 def as_currency(val, replace_nan_with = None, *args, **kwargs):
     if replace_nan_with is not None and numpy.isnan(v):
