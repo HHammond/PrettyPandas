@@ -9,6 +9,7 @@ import numpy as np
 from collections import namedtuple
 from itertools import product
 from functools import partial
+from numbers import Number
 import warnings
 
 from .formatters import as_percent, as_money, as_unit, as_currency, LOCALE_OBJ
@@ -46,8 +47,15 @@ def apply_pretty_globals():
 
 
 Formatter = namedtuple("Formatter", "subset, function")
+remove_nan_formatter = lambda x: '' if x == np.nan else x
 
-
+def PrettyPandasNoIndex(dataframe, table_styles = [], *args, **kwargs):
+    return PrettyPandas(dataframe, 
+                        *args, 
+                        table_styles = table_styles + [{'selector': '.row_heading', 'props': [('display', 'none')]}, 
+                                                       {'selector': '.blank', 'props': [('display', 'none')]}],
+                        **kwargs)
+                        
 class PrettyPandas(Styler):
     """Pretty pandas dataframe Styles.
 
@@ -98,6 +106,7 @@ class PrettyPandas(Styler):
                  summary_rows=None,
                  summary_cols=None,
                  formatters=None,
+                 replace_all_nans_with=None,
                  *args,
                  **kwargs):
 
@@ -106,6 +115,7 @@ class PrettyPandas(Styler):
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
+        self.replace_all_nans_with = replace_all_nans_with
 
         return super(self.__class__, self).__init__(data, *args, **kwargs)
 
@@ -134,7 +144,7 @@ class PrettyPandas(Styler):
         """
         return self.multi_summary([func], [title], axis, **kwargs)
 
-    def multi_summary(self, funcs, titles, axis=0, **kwargs):
+    def multi_summary(self, funcs, titles, axis=0, subset=None, exclude=None, **kwargs):
         """Add multiple summary rows or columns to the dataframe.
 
         Parameters
@@ -150,8 +160,21 @@ class PrettyPandas(Styler):
             return self.multi_summary(funcs, titles, axis=0, **kwargs)\
                        .multi_summary(funcs, titles, axis=1, **kwargs)
 
-        output = [self.data.apply(f, axis=axis, **kwargs).to_frame(t)
-                  for f, t in zip(funcs, titles)]
+        output = []
+        if axis == 0:
+            df = self.data.transpose() #use df to iterate over the rows of the transpose of self.data (i.e. cols of self.data)
+        else:
+            df = self.data
+            
+        if exclude is not None and subset is None:
+            subset = [n for n in list(df.index) if n not in exclude]
+            
+        for f, t in zip(funcs, titles):
+            if subset is None:
+                output.append(self.data.apply(f, axis=axis, **kwargs).to_frame(t)) #apply returns Series, to_frame converts to DataFrame
+            elif subset is not None:
+                summary_vals = [f(vals, **kwargs) if item_name in subset else None for item_name, vals in df.iterrows()]
+                output.append(pd.DataFrame(data = {t: summary_vals}, index = df.index))  #dataframe with column name t and values summary_vals
 
         if axis == 0:
             self.summary_rows += [row.T for row in output]
@@ -176,7 +199,7 @@ class PrettyPandas(Styler):
         :param title: Title to be displayed.
         :param kwargs: Keyword arguments passed to ``numpy.mean``.
         """
-        return self.summary(np.mean, title, **kwargs)
+        return self.summary(np.average, title, **kwargs)
 
     def median(self, title="Median", **kwargs):
         """Add a median summary to this table.
@@ -202,7 +225,7 @@ class PrettyPandas(Styler):
         """
         return self.summary(np.min, title, **kwargs)
 
-    def as_percent(self, subset=None, precision=None, locale=None):
+    def as_percent(self, subset=None, precision=None, **kwargs):
         """Represent subset of dataframe as percentages.
 
         Parameters:
@@ -210,19 +233,14 @@ class PrettyPandas(Styler):
         :param subset: Pandas slice to convert to percentages
         :param precision: int
             Number of decimal places to round to
-        :param locale: Locale to be used (e.g. 'en_US')
         """
-        # TODO: Find good way to implement precision
 
-        add_formatter = partial(self._format_cells,
-                                as_percent,
-                                subset=subset)
-        if locale is not None:
-            return add_formatter(locale=locale)
-        else:
-            return add_formatter(locale=self.DEFAULT_LOCALE)
+        return self._format_cells(as_percent,
+                                  subset=subset, 
+                                  precision=precision,
+                                  **kwargs)
 
-    def as_currency(self, subset=None, currency='USD', locale=None):
+    def as_currency(self, subset=None, currency='USD', locale=None, **kwargs):
         """Represent subset of dataframe as currency.
 
         Parameters:
@@ -234,14 +252,15 @@ class PrettyPandas(Styler):
         add_formatter = partial(self._format_cells,
                                 as_currency,
                                 subset=subset,
-                                currency=currency)
+                                currency=currency, 
+                                **kwargs)
 
         if locale is not None:
             return add_formatter(locale=locale)
         else:
             return add_formatter(locale=self.DEFAULT_LOCALE)
 
-    def as_unit(self, unit, subset=None, precision=None, location='prefix'):
+    def as_unit(self, unit, subset=None, precision=None, location='prefix', **kwargs):
         """Represent subset of dataframe as a special unit.
 
         Parameters:
@@ -259,14 +278,16 @@ class PrettyPandas(Styler):
                                   subset=subset,
                                   precision=precision,
                                   unit=unit,
-                                  location=location)
+                                  location=location, 
+                                  **kwargs)
 
 
     def as_money(self,
                  subset=None,
                  precision=None,
                  currency='$',
-                 location='prefix'):
+                 location='prefix', 
+                 **kwargs):
         """[DEPRECATED] Represent subset of dataframe as currency.
 
         Parameters:
@@ -292,10 +313,14 @@ class PrettyPandas(Styler):
                                       currency=currency,
                                       precision=precision,
                                       subset=subset,
-                                      location=location)
+                                      location=location, 
+                                      **kwargs)
 
     def _format_cells(self, func, subset=None, **kwargs):
         """Add formatting function to cells."""
+
+        if self.replace_all_nans_with is not None and 'replace_nan_with' not in kwargs:
+            kwargs = dict(replace_nan_with = self.replace_all_nans_with, **kwargs)
 
         # Create function closure for formatting operation
         def fn(*args):
@@ -362,4 +387,11 @@ class PrettyPandas(Styler):
 
         # Revert changes to inner data
         self.data = data
+        
+        if self.replace_all_nans_with is not None:
+            for row in result['body']:
+                for cell in row:
+                    v = cell['value']
+                    if isinstance(v, Number) and np.isnan(v):
+                        cell['value'] = self.replace_all_nans_with 
         return result
