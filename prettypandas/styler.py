@@ -240,7 +240,7 @@ class PrettyPandas(Styler):
                                   **kwargs)
 
     @classmethod
-    def set_percent_formatter(formatter = 'as_percent_babel'):
+    def set_percent_formatter(cls, formatter = 'as_percent_babel'):
         """Set the formatting function used for percentages
 
         Parameters:
