@@ -1,12 +1,13 @@
 from __future__ import unicode_literals
 
 from IPython.display import HTML
-from pandas.core.style import Styler
+from pandas.formats.style import Styler
 from pandas.core.indexing import _non_reducing_slice
+import pandas.core.common as com
 import pandas as pd
 import numpy as np
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from itertools import product
 from functools import partial
 from numbers import Number
@@ -109,7 +110,15 @@ class PrettyPandas(Styler):
         self.formatters = formatters or []
         self.replace_all_nans_with = replace_all_nans_with
 
-        return super(self.__class__, self).__init__(data, *args, **kwargs)
+        super(self.__class__, self).__init__(data, *args, **kwargs)
+        
+        def default_display_func(x):
+            if com.is_float(x):
+                return '{:>.{precision}f}'.format(x, precision=self.precision)
+            else:
+                return x
+
+        self._display_funcs = defaultdict(lambda: default_display_func)        
 
     @classmethod
     def set_locale(cls, locale):
@@ -313,11 +322,6 @@ class PrettyPandas(Styler):
         :param location: 'prefix' or 'suffix' indicating where the currency
             symbol should be.
         """
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            warnings.warn("`as_money` is depricated in favour of "
-                          "`as_currency`.",
-                          DeprecationWarning)
 
         precision = self.precision if precision is None else precision
 
@@ -408,7 +412,7 @@ class PrettyPandas(Styler):
                 for cell in row:
                     v = cell['value']
                     if isinstance(v, Number) and np.isnan(v):
-                        cell['value'] = self.replace_all_nans_with 
+                        cell['display_value'] = self.replace_all_nans_with 
         return result
 
 
