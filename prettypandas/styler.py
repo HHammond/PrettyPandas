@@ -1,9 +1,14 @@
 from __future__ import unicode_literals
 
 from IPython.display import HTML
-from pandas.core.style import Styler
 from pandas.core.indexing import _non_reducing_slice
 import pandas as pd
+
+if pd.__version__ >= '0.18.1':
+    from pandas.formats.style import Styler
+else:
+    from pandas.core.style import Styler
+
 import numpy as np
 
 from collections import namedtuple
