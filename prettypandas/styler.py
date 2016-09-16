@@ -1,15 +1,9 @@
 from __future__ import unicode_literals
 
 from IPython.display import HTML
-from pandas.core.indexing import _non_reducing_slice
-import pandas as pd
-
-if pd.__version__ >= '0.18.1':
-    from pandas.formats.style import Styler
-else:
-    from pandas.core.style import Styler
-
 import numpy as np
+import pandas as pd
+from pandas.core.indexing import _non_reducing_slice
 
 from collections import namedtuple
 from itertools import product
@@ -17,6 +11,11 @@ from functools import partial
 import warnings
 
 from .formatters import as_percent, as_money, as_unit, as_currency, LOCALE_OBJ
+
+if pd.__version__ >= '0.18.1':
+    from pandas.formats.style import Styler
+else:
+    from pandas.core.style import Styler
 
 
 def apply_pretty_globals():
@@ -255,8 +254,8 @@ class PrettyPandas(Styler):
         :param subset: Pandas slice to convert to percentages
         :param precision: int
             Number of decimal places to round to
-        :param location: 'prefix' or 'suffix' indicating where the currency symbol
-            should be.
+        :param location: 'prefix' or 'suffix' indicating where the currency
+            symbol should be.
         """
         precision = self.precision if precision is None else precision
 
@@ -265,7 +264,6 @@ class PrettyPandas(Styler):
                                   precision=precision,
                                   unit=unit,
                                   location=location)
-
 
     def as_money(self,
                  subset=None,
@@ -326,7 +324,6 @@ class PrettyPandas(Styler):
         summary_rownames = [series.index[0] for series in self.summary_rows]
 
         rows, cols = self.data.shape
-        ix_rows = self.data.index.size
         ix_cols = len(self.data.index.names)
 
         # Add summary rows and columns

@@ -8,6 +8,18 @@
 PrettyPandas is a Pandas DataFrame Styler class that helps you create
 report quality tables with a simple API.
 
+```{.sourceCode .python}
+from prettypandas import PrettyPandas
+
+(
+    PrettyPandas(df, precision=3)
+    .as_percent(subset=['C'])
+    .as_currency(subset=['A', 'B'])
+    .total()
+    .summary(lambda col: np.sum(col), title='Custom Summary')
+)
+```
+
 <img src="/docs/source/_static/Images/API@2x.png" width="500px" />
 
 Features
