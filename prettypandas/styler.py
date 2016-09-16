@@ -18,6 +18,13 @@ else:
     from pandas.core.style import Styler
 
 
+def _parse_axis(axis):
+    if axis == 'index':
+        return 0
+    if axis == 'columns':
+        return 1
+
+
 def apply_pretty_globals():
     """Apply global CSS to make dataframes pretty.
 
@@ -136,7 +143,7 @@ class PrettyPandas(Styler):
 
         The results of summary can be chained together.
         """
-        return self.multi_summary([func], [title], axis, **kwargs)
+        return self.multi_summary([func], [title], _parse_axis(axis), **kwargs)
 
     def multi_summary(self, funcs, titles, axis=0, **kwargs):
         """Add multiple summary rows or columns to the dataframe.
@@ -154,6 +161,7 @@ class PrettyPandas(Styler):
             return self.multi_summary(funcs, titles, axis=0, **kwargs)\
                        .multi_summary(funcs, titles, axis=1, **kwargs)
 
+        axis = _parse_axis(axis)
         output = [self.data.apply(f, axis=axis, **kwargs).to_frame(t)
                   for f, t in zip(funcs, titles)]
 
@@ -216,8 +224,6 @@ class PrettyPandas(Styler):
             Number of decimal places to round to
         :param locale: Locale to be used (e.g. 'en_US')
         """
-        # TODO: Find good way to implement precision
-
         add_formatter = partial(self._format_cells,
                                 as_percent,
                                 subset=subset)

@@ -11,6 +11,7 @@ quality tables with a simple API.
 
 
 .. code-block:: python
+
   from prettypandas import PrettyPandas
 
   (
