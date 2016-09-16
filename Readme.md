@@ -20,7 +20,7 @@ from prettypandas import PrettyPandas
 )
 ```
 
-<img src="/docs/source/_static/Images/API@2x.png" width="500px" />
+<img src="/docs/source/_static/Images/gh_readme@2x.png" width="500px" />
 
 Features
 --------
