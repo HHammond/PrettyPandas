@@ -6,7 +6,7 @@ import pandas as pd
 from pandas.core.indexing import _non_reducing_slice
 
 from collections import namedtuple
-from itertools import product
+from itertools import chain
 from functools import partial
 import warnings
 
@@ -23,6 +23,7 @@ def _parse_axis(axis):
         return 0
     if axis == 'columns':
         return 1
+    return axis
 
 
 def apply_pretty_globals():
@@ -57,6 +58,7 @@ def apply_pretty_globals():
 
 
 Formatter = namedtuple("Formatter", "subset, function")
+Summarizer = namedtuple("Summarizer", "func, title, axis, subset, kwargs")
 
 
 class PrettyPandas(Styler):
@@ -129,7 +131,8 @@ class PrettyPandas(Styler):
         """Add a CSS selector and style to this Styler."""
         self.table_styles.append({'selector': selector, 'props': props})
 
-    def summary(self, func=np.sum, title='Total', axis=0, **kwargs):
+    def summary(self, func=np.sum, title='Total', axis=0, subset=None,
+                **kwargs):
         """Add multiple summary rows or columns to the dataframe.
 
         Parameters
@@ -143,34 +146,20 @@ class PrettyPandas(Styler):
 
         The results of summary can be chained together.
         """
-        return self.multi_summary([func], [title], _parse_axis(axis), **kwargs)
-
-    def multi_summary(self, funcs, titles, axis=0, **kwargs):
-        """Add multiple summary rows or columns to the dataframe.
-
-        Parameters
-        ----------
-        :param funcs: Iterable of functions to be used for a summary.
-        :param titles: Iterable of titles in the same order as the functions.
-        :param axis:
-            Same as numpy and pandas axis argument. A value of None will cause
-            the summary to be applied to both rows and columns.
-        :param kwargs: Keyword arguments passed to all the functions.
-        """
-        if axis is None:
-            return self.multi_summary(funcs, titles, axis=0, **kwargs)\
-                       .multi_summary(funcs, titles, axis=1, **kwargs)
 
         axis = _parse_axis(axis)
-        output = [self.data.apply(f, axis=axis, **kwargs).to_frame(t)
-                  for f, t in zip(funcs, titles)]
 
         if axis == 0:
-            self.summary_rows += [row.T for row in output]
+            subset = subset or self.data.columns
         elif axis == 1:
-            self.summary_cols += output
-        else:
-            ValueError("Invalid axis selected. Can only use 0, 1, or None.")
+            subset = subset or self.data.index.values
+
+        summarizer = Summarizer(func, title, axis, subset, kwargs)
+
+        if axis == 0 or axis is None:
+            self.summary_rows.append(summarizer)
+        if axis == 1 or axis is None:
+            self.summary_cols.append(summarizer)
 
         return self
 
@@ -306,57 +295,68 @@ class PrettyPandas(Styler):
     def _format_cells(self, func, subset=None, **kwargs):
         """Add formatting function to cells."""
 
-        # Create function closure for formatting operation
-        def fn(*args):
-            return func(*args, **kwargs)
-
-        self.formatters.append(Formatter(subset=subset, function=fn))
+        self.formatters.append(Formatter(subset=subset,
+                                         function=partial(func)))
         return self
 
     def _apply_formatters(self):
         """Apply all added formatting."""
+
+        def format_if_possible(value, fn):
+            try:
+                return fn(value)
+            except:
+                return str(value)
+
         for subset, function in self.formatters:
             if subset is None:
                 subset = self.data.index
             else:
                 subset = _non_reducing_slice(subset)
-            self.data.loc[subset] = self.data.loc[subset].applymap(function)
+
+            slice = self.data.ix[subset].applymap(
+                partial(format_if_possible, fn=function)
+            )
+            self.data.ix[subset] = slice
         return self
 
     def _apply_summaries(self):
         """Add all summary rows and columns."""
-        colnames = list(self.data.columns)
-        summary_colnames = [series.columns[0] for series in self.summary_cols]
-        summary_rownames = [series.index[0] for series in self.summary_rows]
+        rows = []
+        cols = []
+        rownames = []
+        colnames = []
+        summaries = chain(self.summary_rows, self.summary_cols)
+        for func, title, axis, subset, kwargs in summaries:
+            data = self.data if axis == 0 else self.data.T
 
-        rows, cols = self.data.shape
-        ix_cols = len(self.data.index.names)
+            row = data[subset].apply(func, **kwargs)
+            row.name = title
+            row = row.to_frame().T
 
-        # Add summary rows and columns
-        self.data = pd.concat([self.data] + self.summary_cols,
-                              axis=1,
-                              ignore_index=False)
-        self.data = pd.concat([self.data] + self.summary_rows,
-                              axis=0,
-                              ignore_index=False)
+            if axis == 0:
+                rows.append(row)
+                rownames.append(title)
+            else:
+                cols.append(row)
+                colnames.append(title)
 
-        # Update CSS styles
-        for i, _ in enumerate(self.summary_rows):
-            index = rows + i + 1
-            self._append_selector('tr:nth-child({})'.format(index),
+        for row in rows:
+            self.data = self.data.append(row)
+        for col in cols:
+            self.data = self.data.T.append(col).T
+
+        for i, _ in enumerate(rows):
+            self._append_selector('tr:nth-last-child({})'.format(i + 1),
+                                  *self.SUMMARY_PROPERTIES)
+        for i, _ in enumerate(cols):
+            self._append_selector('td:nth-last-child({})'.format(i + 1),
                                   *self.SUMMARY_PROPERTIES)
 
-        for i, _ in enumerate(self.summary_cols):
-            index = cols + ix_cols + i + 1
-            self._append_selector('td:nth-child({})'.format(index),
-                                  *self.SUMMARY_PROPERTIES)
-
-        # Sort column names
-        self.data = self.data[colnames + summary_colnames]
-
-        # Fix shared summary cells to be empty
-        for row, col in product(summary_rownames, summary_colnames):
-            self.data.loc[row, col] = ''
+        for r in rownames:
+            self.data.ix[r, :] = self.data.ix[r, :].fillna('')
+        for c in colnames:
+            self.data.ix[:, c] = self.data.ix[:, c].fillna('')
 
         return self
 
@@ -368,6 +368,5 @@ class PrettyPandas(Styler):
         self._apply_formatters()
         result = super(self.__class__, self)._translate()
 
-        # Revert changes to inner data
         self.data = data
         return result
