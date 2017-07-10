@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 
 from IPython.display import HTML
-from pandas.core.style import Styler
+try:
+    from pandas.core.style import Styler
+except ImportError:
+    from pandas.io.formats.style import Styler
 from pandas.core.indexing import _non_reducing_slice
 import pandas as pd
 import numpy as np
