@@ -6,10 +6,11 @@ try:
 except ImportError:
     from pandas.io.formats.style import Styler
 from pandas.core.indexing import _non_reducing_slice
+import pandas.core.common as com
 import pandas as pd
 import numpy as np
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from itertools import product
 from functools import partial
 from numbers import Number
@@ -93,6 +94,11 @@ class PrettyPandas(Styler):
         {'selector': '*', 'props': [('border-color', DEFAULT_BORDER_COLOUR)]},
     ]
 
+    _NO_INDEX_STYLES = [
+        {'selector': '.row_heading', 'props': [('display', 'none')]},
+        {'selector': '.blank', 'props': [('display', 'none')]}
+    ]    
+
     #: Default local for formatting functions
     DEFAULT_LOCALE = LOCALE_OBJ
 
@@ -102,17 +108,29 @@ class PrettyPandas(Styler):
                  summary_cols=None,
                  formatters=None,
                  replace_all_nans_with=None,
+                 show_index=True,
                  *args,
                  **kwargs):
 
         kwargs['table_styles'] = self.STYLES + kwargs.get('table_styles', [])
 
+        if not show_index:
+            kwargs['table_styles'] += self._NO_INDEX_STYLES
+            
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
         self.replace_all_nans_with = replace_all_nans_with
 
-        return super(self.__class__, self).__init__(data, *args, **kwargs)
+        super(PrettyPandas, self).__init__(data, *args, **kwargs)
+        
+        def default_display_func(x):
+            if com.is_float(x):
+                return '{:>.{precision}f}'.format(x, precision=self.precision)
+            else:
+                return x
+
+        self._display_funcs = defaultdict(lambda: default_display_func)        
 
     @classmethod
     def set_locale(cls, locale):
@@ -159,12 +177,14 @@ class PrettyPandas(Styler):
         if axis == 0:
             #use df to iterate over rows of the transpose of self.data below
             #(i.e. cols of self.data)
-            df = self.data.transpose() 
+            iter_fn = self.data.iteritems
+            summary_names = self.data.columns
         else:
-            df = self.data
+            iter_fn = self.data.iterrows
+            summary_names = self.data.index
             
         if exclude is not None and subset is None:
-            subset = [n for n in list(df.index) if n not in exclude]
+            subset = [n for n in summary_names if n not in exclude]
             
         for f, t in zip(funcs, titles):
             if subset is None:
@@ -173,10 +193,10 @@ class PrettyPandas(Styler):
                                        .to_frame(t)) 
             elif subset is not None:
                 summary_vals = [f(vals, **kwargs) if item_name in subset 
-                                else None for item_name, vals in df.iterrows()]
+                                else None for item_name, vals in iter_fn()]
                 #dataframe with column name t and values summary_vals
                 output.append(pd.DataFrame(data = {t: summary_vals}, 
-                                           index = df.index))  
+                                           index = summary_names))  
 
         if axis == 0:
             self.summary_rows += [row.T for row in output]
@@ -316,11 +336,6 @@ class PrettyPandas(Styler):
         :param location: 'prefix' or 'suffix' indicating where the currency
             symbol should be.
         """
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            warnings.warn("`as_money` is depricated in favour of "
-                          "`as_currency`.",
-                          DeprecationWarning)
 
         precision = self.precision if precision is None else precision
 
@@ -353,6 +368,9 @@ class PrettyPandas(Styler):
             if subset is None:
                 subset = self.data.index
             else:
+                subset = [s for s in subset if s in self.data]
+                if not subset:
+                    continue
                 subset = _non_reducing_slice(subset)
             self.data.loc[subset] = self.data.loc[subset].applymap(function)
         return self
@@ -411,7 +429,7 @@ class PrettyPandas(Styler):
                 for cell in row:
                     v = cell['value']
                     if isinstance(v, Number) and np.isnan(v):
-                        cell['value'] = self.replace_all_nans_with 
+                        cell['display_value'] = self.replace_all_nans_with 
         return result
 
 
@@ -426,6 +444,9 @@ class PrettyPandasNoIndex(PrettyPandas):
     ]    
 
     def __init__(self, dataframe, table_styles=[], *args, **kwargs):
+        import warnings
+        warnings.warn('PrettyPandasNoIndex is deprecated - use PrettyPandas(show_index = False) instead')
+        
         super(PrettyPandasNoIndex, self) \
             .__init__(dataframe,
                       *args,
