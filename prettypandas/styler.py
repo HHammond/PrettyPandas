@@ -406,6 +406,21 @@ class PrettyPandas(Styler):
 
         # Revert changes to inner data
         self.data = data
+
+        for row in result['body']:
+            for cell in row:
+                if not cell.get('is_visible', True):
+                    cell['is_visible'] = True
+
+        head = result['head']
+        if len(head) == 2 and 'blank' in head[0][0]['class'] and 'blank' not in head[1][0]['class']:
+            merge_headers = True
+            for col in head[1][1:]:
+                if 'blank' not in col['class']:
+                    merge_headers = False
+            if merge_headers:
+                head[0][0] = head[1][0]
+                result['head'] = [head[0]]
         
         if self.replace_all_nans_with is not None:
             for row in result['body']:
