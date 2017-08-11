@@ -91,6 +91,11 @@ class PrettyPandas(Styler):
         {'selector': '*', 'props': [('border-color', DEFAULT_BORDER_COLOUR)]},
     ]
 
+    _NO_INDEX_STYLES = [
+        {'selector': '.row_heading', 'props': [('display', 'none')]},
+        {'selector': '.blank', 'props': [('display', 'none')]}
+    ]    
+
     #: Default local for formatting functions
     DEFAULT_LOCALE = LOCALE_OBJ
 
@@ -100,17 +105,21 @@ class PrettyPandas(Styler):
                  summary_cols=None,
                  formatters=None,
                  replace_all_nans_with=None,
+                 show_index=True,
                  *args,
                  **kwargs):
 
         kwargs['table_styles'] = self.STYLES + kwargs.get('table_styles', [])
 
+        if not show_index:
+            kwargs['table_styles'] += self._NO_INDEX_STYLES
+            
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
         self.replace_all_nans_with = replace_all_nans_with
 
-        super(self.__class__, self).__init__(data, *args, **kwargs)
+        super(PrettyPandas, self).__init__(data, *args, **kwargs)
         
         def default_display_func(x):
             if com.is_float(x):
@@ -165,12 +174,14 @@ class PrettyPandas(Styler):
         if axis == 0:
             #use df to iterate over rows of the transpose of self.data below
             #(i.e. cols of self.data)
-            df = self.data.transpose() 
+            iter_fn = self.data.iteritems
+            summary_names = self.data.columns
         else:
-            df = self.data
+            iter_fn = self.data.iterrows
+            summary_names = self.data.index
             
         if exclude is not None and subset is None:
-            subset = [n for n in list(df.index) if n not in exclude]
+            subset = [n for n in summary_names if n not in exclude]
             
         for f, t in zip(funcs, titles):
             if subset is None:
@@ -179,10 +190,10 @@ class PrettyPandas(Styler):
                                        .to_frame(t)) 
             elif subset is not None:
                 summary_vals = [f(vals, **kwargs) if item_name in subset 
-                                else None for item_name, vals in df.iterrows()]
+                                else None for item_name, vals in iter_fn()]
                 #dataframe with column name t and values summary_vals
                 output.append(pd.DataFrame(data = {t: summary_vals}, 
-                                           index = df.index))  
+                                           index = summary_names))  
 
         if axis == 0:
             self.summary_rows += [row.T for row in output]
@@ -354,6 +365,9 @@ class PrettyPandas(Styler):
             if subset is None:
                 subset = self.data.index
             else:
+                subset = [s for s in subset if s in self.data]
+                if not subset:
+                    continue
                 subset = _non_reducing_slice(subset)
             self.data.loc[subset] = self.data.loc[subset].applymap(function)
         return self
@@ -442,6 +456,9 @@ class PrettyPandasNoIndex(PrettyPandas):
     ]    
 
     def __init__(self, dataframe, table_styles=[], *args, **kwargs):
+        import warnings
+        warnings.warn('PrettyPandasNoIndex is deprecated - use PrettyPandas(show_index = False) instead')
+        
         super(PrettyPandasNoIndex, self) \
             .__init__(dataframe,
                       *args,
