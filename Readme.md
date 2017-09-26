@@ -18,7 +18,7 @@ Features
 -   Number formatting for currency, scientific units, and percentages.
 -   Chaining commands.
 -   Works seamlessly with [Pandas Style
-    API](http://pandas.pydata.org/pandas-docs/stable/style.html>).
+    API](http://pandas.pydata.org/pandas-docs/stable/style.html).
 
 Installation
 ------------
