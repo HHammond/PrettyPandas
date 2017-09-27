@@ -10,7 +10,7 @@ with open(path.join(here, 'README.txt'), encoding='utf-8') as f:
 setup(
     name='prettypandas',
 
-    version='0.0.3',
+    version='0.1.0',
 
     description='Pandas Styler for Report Quality Tables.',
     long_description=long_description,
@@ -23,7 +23,7 @@ setup(
     license='MIT',
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering',
@@ -39,7 +39,16 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    keywords='pandas pretty display tables reporting',
+    keywords=' '.join([
+        'pandas',
+        'pretty',
+        'prettypandas',
+        'reporting',
+        'display',
+        'tables',
+        'analysis',
+        'data',
+    ]),
 
     packages=["prettypandas"],
 

@@ -20,21 +20,6 @@ def format_number(v, number_format, prefix='', suffix=''):
         raise TypeError("Numberic type required.")
 
 
-def as_percent(v, precision=2):
-    """Convert number to percentage string.
-
-    Parameters:
-    -----------
-    :param v: numerical value to be converted
-    :param precision: int
-        decimal places to round to
-    """
-    if not isinstance(precision, Integral):
-        raise TypeError("Precision must be an integer.")
-
-    return format_number(v, "0.{}%".format(precision))
-
-
 def as_unit(v, unit, precision=2, location='suffix'):
     """Convert value to unit.
 
