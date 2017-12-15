@@ -13,7 +13,7 @@ LOCALE_OBJ = Locale(LOCALE or "en_US")
 
 def format_number(v, number_format, prefix='', suffix='', replace_nan_with=None):
     """Format a number to a string."""
-    if replace_nan_with is not None and numpy.isnan(v):
+    if replace_nan_with is not None and (v is None or isinstance(v, Number) and numpy.isnan(v)):
         return replace_nan_with
         
     if isinstance(v, Number):
