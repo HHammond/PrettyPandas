@@ -1,5 +1,15 @@
-from .formatters import *
-from .styler import *
+from .summarizer import Summarizer
+from .formatters import as_currency, as_percent, as_unit
 
 
-__all__ = ['PrettyPandas']
+class PrettyPandas(Summarizer):
+    pass
+
+
+__all__ = [
+    'PrettyPandas',
+    'Summarizer',
+    'as_currency',
+    'as_percent',
+    'as_unit',
+]

@@ -1,7 +1,6 @@
 from numbers import Number, Integral
 from functools import partial, wraps
 import locale
-import warnings
 
 from babel import Locale, numbers
 
@@ -25,7 +24,7 @@ def surpress_formatting_errors(fn):
     return inner
 
 
-def format_number(number_format, prefix='', suffix=''):
+def _format_numer(number_format, prefix='', suffix=''):
     """Format a number to a string."""
     @surpress_formatting_errors
     def inner(v):
@@ -38,7 +37,7 @@ def format_number(number_format, prefix='', suffix=''):
     return inner
 
 
-def as_percent(v, precision=2):
+def as_percent(precision=2, **kwargs):
     """Convert number to percentage string.
 
     Parameters:
@@ -51,7 +50,7 @@ def as_percent(v, precision=2):
         raise TypeError("Precision must be an integer.")
 
     return surpress_formatting_errors(
-        format_number("0.{}%".format(precision))
+        _format_numer(".{}%".format(precision))
     )
 
 
@@ -72,9 +71,9 @@ def as_unit(unit, precision=2, location='suffix'):
         raise TypeError("Precision must be an integer.")
 
     if location == 'prefix':
-        formatter = partial(format_number, prefix=unit)
+        formatter = partial(_format_numer, prefix=unit)
     elif location == 'suffix':
-        formatter = partial(format_number, suffix=unit)
+        formatter = partial(_format_numer, suffix=unit)
     else:
         raise ValueError("location must be either 'prefix' or 'suffix'.")
 

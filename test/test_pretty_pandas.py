@@ -1,5 +1,4 @@
 import copy
-from operator import itemgetter
 
 import pytest
 import numpy as np
