@@ -1,39 +1,14 @@
 .. quickstart:
 
-Getting Started
-===============
-
-Adding Style to a DataFrame
----------------------------
-
-The PrettyPandas class takes advantage of the new `Pandas Style API`_ to create
-custom tables for your dataframes. If you have a dataframe ``df``, this is how
-that might look:
-
-.. _Pandas Style API: http://pandas.pydata.org/pandas-docs/stable/style.html
-
-.. code-block:: python
-
-    from prettypandas import PrettyPandas
-
-    table = PrettyPandas(df)
-
-.. image:: _static/Images/1@2x.png
-    :width: 276px
-
-.. note::
-    An instance of PrettyPandas is no longer the original dataframe but
-    a presentation of the dataframe. That means you cannot use any of the
-    standard transformations from the ``pandas.DataFrame`` class. The
-    PrettyPandas instance can't change the original dataframe so there's no
-    fear of contaminating your data.
+Quick Start
+===========
 
 Adding Summaries
 ----------------
 
-PrettyPandas supports many different summary functions, as well the ability to
-apply summaries along rows, columns, or both. Summaries chain together so you
-can use multiple summaries without any headaches.
+PrettyPandas supports many built in summary functions, as well as providing the
+ability to create your own summaries. Summary functions can be applied over
+a DataFrame's rows or columns, or both.
 
 The builtin summary methods are:
 
@@ -43,8 +18,8 @@ The builtin summary methods are:
 * :py:meth:`min <prettypandas.PrettyPandas.min>`
 * :py:meth:`max <prettypandas.PrettyPandas.max>`
 
-The above functions work nicely on your table, if you wanted to add a grand
-total to the bottom of your table the code is simple:
+If you wanted to add a grand total to the bottom of your table the code is
+simple:
 
 .. code-block:: python
 
@@ -53,12 +28,19 @@ total to the bottom of your table the code is simple:
 .. image:: _static/Images/total@2x.png
     :width: 311px
 
-And if you want to mix and match summaries:
+Or additionally if you want to use Pandas fluent API:
 
 .. code-block:: python
 
-    PrettyPandas(df).total().average()
-    
+    df.pipe(PrettyPandas).total()
+
+
+PrettyPandas follows a fluent API so you can chain multiple summaries easily:
+
+.. code-block:: python
+
+    df.pipe(PrettyPandas).total().average()
+
 .. image:: _static/Images/average@2x.png
     :width: 334px
 
@@ -82,19 +64,59 @@ from a function which takes an array-like structure as a list.
 
 .. code-block:: python
 
-    def count_greater_than_five(items):
-        return sum(item > 5 for item in items)
+    def count_greater_than_zero(column):
+        return (column > 0).sum()
 
-    PrettyPandas(df).summary(count_greater_than_five, title="> 5")
+    PrettyPandas(df).summary(count_greater_than_zero, title="> 0")
 
 .. image:: _static/Images/custom_fn@2x.png
     :width: 287px
 
 
+Converting Back to Pandas DataFrame
+-----------------------------------
+
+``.to_frame()``
+^^^^^^^^^^^^^^^
+
+After adding summary rows or columns you can get a DataFrame with your changes
+applied by calling the ``._to_frame``.
+
+For example the following code would add a total to your DataFrame and return
+it back to a Pandas native DataFrame.
+
+.. code-block:: python
+
+    (
+        df
+        .pipe(PrettyPandas)
+        .total(axis=1)
+        .to_frame()
+    )
+
+
+``.style``
+^^^^^^^^^^
+
+The ``.style`` property allows you to drop right into the Pandas Style API.
+This code would allow you to compute a summary, format the table using
+percentages, and apply a backgrouned gradient to a table:
+
+.. code-block:: python
+
+    (
+        df.pipe(PrettyPandas)
+        .as_percent(precision=0)
+        .median()
+        .style
+        .background_gradient()
+    )
+
+
 Formatting Numbers
 ------------------
 
-Most reports use at least some units of measurement. PrettyPandas currently 
+Most reports use at least some units of measurement. PrettyPandas currently
 supports percentages, money, and a more general unit method.
 
 * :py:meth:`as_percent <prettypandas.PrettyPandas.as_percent>`
@@ -103,39 +125,40 @@ supports percentages, money, and a more general unit method.
 
 The ``as_unit`` method takes a positional ``unit`` argument which indicates the
 string representing the unit to be used and a ``location`` argument to specify
-whether the unit should be a prefix or suffix to the value. 
+whether the unit should be a prefix or suffix to the value.
 
 The ``as_currency`` and ``as_percent`` methods are localized to use whatever
 units your Python distribution thinks are best for you. If you aren't getting
 the correct units use the :py:meth:`set_locale
-<prettypandas.PrettyPandas.set_locale>` method to specify your locale. 
+<prettypandas.PrettyPandas.set_locale>` method to specify your locale.
 
 If you need to use a different currency, just pass it to ``currency='...'`` to
 change it.
 
 The ``as_money`` method takes optional ``currency`` and ``location`` arguments
 which work just like the ``as_unit`` method. By default the currency is in
-dollars. 
+dollars.
 
-.. note:: 
+.. note::
     Python 2 doesn't support unicode literals by default. You can use `unicode
     literals`_ (e.g. ``u'€'``) or import the unicode literal behaviour from
     Python 3:
 
     .. code-block:: python
-        
+
         from __future__ import unicode_literals
 
 
-.. _unicode literals: https://docs.python.org/2/howto/unicode.html#unicode-literals-in-python-source-code
+.. _unicode literals:
+    https://docs.python.org/2/howto/unicode.html#unicode-literals-in-python-source-code
 
 
 Formatting Columns
 ^^^^^^^^^^^^^^^^^^
 
-By default the formatting methods apply to the entire dataframe. When you need 
-to format just a few columns you can use the `subset` argument to specify a 
-single column, or multiple columns. 
+By default the formatting methods apply to the entire dataframe. When you need
+to format just a few columns you can use the `subset` argument to specify a
+single column, or multiple columns.
 
 .. code-block:: python
 
@@ -154,13 +177,13 @@ single column, or multiple columns.
 Formatting Rows and Complex Formatting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Formatting rows is more complicated than formatting columns. The `subset` 
-argument needs to take in a `pandas.Index` to specify the row. 
+Formatting rows is more complicated than formatting columns. The `subset`
+argument needs to take in a `pandas.Index` to specify the row.
 
 .. code-block:: python
 
     # Format the row with row-index 3
-    PrettyPandas(df, precision=2).as_percent(subset=pd.IndexSlice[3,:])
+    PrettyPandas(df).as_percent(subset=pd.IndexSlice[3,:], precision=2)
 
 .. image:: _static/Images/format_row@2x.png
     :width: 294px
@@ -172,27 +195,21 @@ The following example shows how to select rows in a multi-index:
 
 .. code-block:: python
 
-    idx = pd.IndexSlice
-    first_row_idx = idx[:, 1]   # select all with index like (*, 1)
-    second_row_idx = idx[:, 2]  # select all with index like (*, 2)
+    first_row_idx = pd.IndexSlice[0, :]
+    second_row_idx = pd.IndexSlice[1, :]
 
-    (PrettyPandas(df2)
-     .as_money(subset=idx[first_row_idx, :])
-     .as_percent(subset=idx[second_row_idx, :])
-     )
+    (
+        df.pipe(PrettyPandas)
+        .as_currency(subset=first_row_idx)
+        .as_percent(subset=second_row_idx)
+        .total(axis=1)
+    )
 
 .. image:: _static/Images/format_complex@2x.png
-    :width: 315px
+    :width: 370px
 
 For more info on Pandas indexing, read `Pandas Indexing`_ and `Pandas Advanced
 Indexing`_.
 
 .. _Pandas Indexing: http://pandas.pydata.org/pandas-docs/stable/indexing.html
 .. _Pandas Advanced Indexing: http://pandas.pydata.org/pandas-docs/stable/advanced.html
-
-The Magic Function
-------------------
-
-The :py:func:`apply_pretty_globals` function will patch your notebook so that
-all tables are styled the same. This injects HTML into the notebook (which
-some hosts don't allow).

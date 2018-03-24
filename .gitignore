@@ -44,6 +44,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.pytest_cache
 
 # Translations
 *.mo
@@ -54,6 +55,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+*.ipynb_checkpoints
 
 # PyBuilder
 target/

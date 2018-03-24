@@ -11,6 +11,6 @@ Submodules
 
 .. toctree::
 
+   prettypandas.summarizer
    prettypandas.formatters
-   prettypandas.styler
 
