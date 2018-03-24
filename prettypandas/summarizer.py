@@ -5,12 +5,12 @@ import pandas as pd
 from .formatters import as_percent, as_currency, as_unit, LOCALE_OBJ
 
 
-def axis_is_rows(axis):
+def _axis_is_rows(axis):
     return axis == 0 or axis == 'rows'
 
 
-def axis_is_cols(axis):
-    return axis == 1 or axis == 'columns'
+def _axis_is_cols(axis):
+    return axis == 1 or axis == 'columns' or axis == 'index'
 
 
 class Aggregate(object):
@@ -54,9 +54,9 @@ class Aggregate(object):
         """Compute aggregate over DataFrame"""
 
         if self.subset:
-            if axis_is_rows(self.axis):
+            if _axis_is_rows(self.axis):
                 df = df[self.subset]
-            if axis_is_cols(self.axis):
+            if _axis_is_cols(self.axis):
                 df = df.loc[self.subset]
 
         result = df.agg(self.func, axis=self.axis, *self.args, **self.kwargs)
@@ -130,9 +130,9 @@ class PrettyPandas(object):
     def _add_summary(self, agg):
         new = self._copy()
 
-        if axis_is_rows(agg.axis):
+        if _axis_is_rows(agg.axis):
             new.summary_rows += [agg]
-        elif axis_is_cols(agg.axis):
+        elif _axis_is_cols(agg.axis):
             new.summary_cols += [agg]
         else:
             raise ValueError("Invalid axis supplied.")
