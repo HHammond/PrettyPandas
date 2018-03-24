@@ -9,6 +9,7 @@ class PrettyPandas(Summarizer):
 __all__ = [
     'PrettyPandas',
     'Summarizer',
+
     'as_currency',
     'as_percent',
     'as_unit',

@@ -9,7 +9,7 @@ LOCALE, ENCODING = locale.getlocale()
 LOCALE_OBJ = Locale(LOCALE or "en_US")
 
 
-def surpress_formatting_errors(fn):
+def _surpress_formatting_errors(fn):
     """
     I know this is dangerous and the wrong way to solve the problem, but when
     using both row and columns summaries it's easier to just swallow errors
@@ -26,7 +26,7 @@ def surpress_formatting_errors(fn):
 
 def _format_numer(number_format, prefix='', suffix=''):
     """Format a number to a string."""
-    @surpress_formatting_errors
+    @_surpress_formatting_errors
     def inner(v):
         if isinstance(v, Number):
             return ("{{}}{{:{}}}{{}}"
@@ -49,7 +49,7 @@ def as_percent(precision=2, **kwargs):
     if not isinstance(precision, Integral):
         raise TypeError("Precision must be an integer.")
 
-    return surpress_formatting_errors(
+    return _surpress_formatting_errors(
         _format_numer(".{}%".format(precision))
     )
 
@@ -77,13 +77,13 @@ def as_unit(unit, precision=2, location='suffix'):
     else:
         raise ValueError("location must be either 'prefix' or 'suffix'.")
 
-    return surpress_formatting_errors(
+    return _surpress_formatting_errors(
         formatter("0.{}f".format(precision))
     )
 
 
 def as_currency(currency='USD', locale=LOCALE_OBJ):
-    @surpress_formatting_errors
+    @_surpress_formatting_errors
     def inner(v):
         return numbers.format_currency(v, currency=currency, locale=LOCALE_OBJ)
     return inner

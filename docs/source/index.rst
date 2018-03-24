@@ -6,8 +6,8 @@
 PrettyPandas
 ============
 
-PrettyPandas is a Pandas DataFrame Styler class that helps you create report
-quality tables with a simple API.
+PrettyPandas is an extension to the Pandas DataFrame class that helps you
+create report qualitiy tables with a simple API.
 
 
 .. image:: _static/Images/API@2x.png
@@ -17,14 +17,17 @@ quality tables with a simple API.
 Features
 --------
 
-- Add summary rows and columns. 
-- A nice and customizable theme. 
-- Number formatting for currency, scientific units, and percentages. 
-- Chaining commands. 
+- Add summary rows and columns.
+- Number formatting for currency, scientific units, and percentages.
+- Chaining commands.
 - Works seamlessly with `Pandas Style API`_.
 
-.. _Pandas Style API: http://pandas.pydata.org/pandas-docs/stable/style.html>
 
+Version 0.0.4 removes the ``apply_pretty_globals`` function and other custom
+CSS properties because Pandas now defaults to providing great looking html
+tables. If you still want custom CSS you can use the `Pandas Style API`_.
+
+.. _Pandas Style API: http://pandas.pydata.org/pandas-docs/stable/style.html>
 
 Installation
 ------------
@@ -62,8 +65,8 @@ Contents
    :maxdepth: 2
 
    Getting Started <quickstart>
-   API <prettypandas>
    testing
+   API <prettypandas>
 
 Indices and tables
 ==================
