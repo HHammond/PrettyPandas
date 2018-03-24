@@ -22,7 +22,7 @@ create report qualitiy tables with a simple API.
    )
 
 .. image:: _static/Images/API@2x.png
-    :width: 500px
+    :width: 400px
 
 
 Features
@@ -33,10 +33,12 @@ Features
 - Chaining commands.
 - Works seamlessly with `Pandas Style API`_.
 
+.. note::
 
-Version 0.0.4 removes the ``apply_pretty_globals`` function and other custom
-CSS properties because Pandas now defaults to providing great looking html
-tables. If you still want custom CSS you can use the `Pandas Style API`_.
+   Version 0.0.4 removes the ``apply_pretty_globals`` function and other custom
+   CSS properties because Pandas and Jupyter now defaults to providing great
+   looking html tables. If you still want custom CSS you can use the `Pandas
+   Style API`_.
 
 .. _Pandas Style API: http://pandas.pydata.org/pandas-docs/stable/style.html>
 
@@ -73,7 +75,7 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    Getting Started <quickstart>
    testing

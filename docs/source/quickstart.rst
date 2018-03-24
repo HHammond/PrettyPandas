@@ -149,7 +149,8 @@ dollars.
         from __future__ import unicode_literals
 
 
-.. _unicode literals: https://docs.python.org/2/howto/unicode.html#unicode-literals-in-python-source-code
+.. _unicode literals:
+    https://docs.python.org/2/howto/unicode.html#unicode-literals-in-python-source-code
 
 
 Formatting Columns

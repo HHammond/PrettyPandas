@@ -14,6 +14,24 @@ def axis_is_cols(axis):
 
 
 class Aggregate(object):
+    """Aggreagte
+
+    Wrapper to calculate aggregate row on datafame.
+
+    :param title:
+        Aggregate row title
+    :param func:
+        Function to be passed to DataFrame.agg
+    :param subset:
+        Subset of DataFrame to compute aggregate on
+    :param axis:
+        Pandas axis to compute over
+
+    :param args:
+        Positionsal arguments to DataFrame.agg
+    :param kwargs:
+        Keyword arguments to DataFrame.agg
+    """
 
     def __init__(
             self,
@@ -21,20 +39,19 @@ class Aggregate(object):
             func,
             subset=None,
             axis=0,
-            raw=False,
             *args,
             **kwargs):
 
         self.title = title
         self.subset = subset
         self.axis = axis
-        self.raw = raw
 
         self.func = func
         self.args = args
         self.kwargs = kwargs
 
     def apply(self, df):
+        """Compute aggregate over DataFrame"""
 
         if self.subset:
             if axis_is_rows(self.axis):
@@ -48,6 +65,17 @@ class Aggregate(object):
 
 
 class Formatter(object):
+    """Formatter
+
+    Wrapper to apply formatting to datafame.
+
+    :param formatter:
+        Function to be passed to Pandas Styler.format
+    :param args:
+        Positionsal arguments to Styler.format
+    :param kwargs:
+        Keyword arguments to Styler.format
+    """
 
     def __init__(self, formatter, args, kwargs):
         self.formatter = formatter
@@ -55,6 +83,7 @@ class Formatter(object):
         self.kwargs = kwargs
 
     def apply(self, styler):
+        """Apply Summary over Pandas Styler"""
         return styler.format(self.formatter, *self.args, **self.kwargs)
 
 
@@ -162,13 +191,16 @@ class PrettyPandas(object):
 
     @property
     def frame(self):
+        """Add summaries and convert back to DataFrame"""
         return self._apply_summaries()
 
     def to_frame(self):
+        """Add summaries and convert back to DataFrame"""
         return self.frame
 
     @property
     def style(self):
+        """Add summaries and convert to Pandas Styler"""
         row_titles = [a.title for a in self._cleaned_summary_rows]
         col_titles = [a.title for a in self._cleaned_summary_cols]
         row_ix = pd.IndexSlice[row_titles, :]
@@ -204,10 +236,6 @@ class PrettyPandas(object):
 
     def __repr__(self):
         return str(self.frame)
-
-    @classmethod
-    def set_locale(cls, locale):
-        cls.DEFAULT_LOCALE = locale
 
     def summary(self,
                 func=methodcaller('sum'),
@@ -305,10 +333,21 @@ class PrettyPandas(object):
         return self.summary(methodcaller('min'), title, **kwargs)
 
     def as_percent(self, precision=2, *args, **kwargs):
+        """Format subset as percentages
+
+        :param precision: Decimal precision
+        :param subset: Pandas subset
+        """
         f = Formatter(as_percent(precision), args, kwargs)
         return self._add_formatter(f)
 
     def as_currency(self, currency='USD', locale=LOCALE_OBJ, *args, **kwargs):
+        """Format subset as currency
+
+        :param currency: Currency
+        :param locale: Babel locale for currency formatting
+        :param subset: Pandas subset
+        """
         f = Formatter(
             as_currency(currency=currency, locale=locale),
             args,
@@ -317,6 +356,12 @@ class PrettyPandas(object):
         return self._add_formatter(f)
 
     def as_unit(self, unit, location='suffix', *args, **kwargs):
+        """Format subset as with units
+
+        :param unit: string to use as unit
+        :param location: prefix or suffix
+        :param subset: Pandas subset
+        """
         f = Formatter(
             as_unit(unit, location=location),
             args,
