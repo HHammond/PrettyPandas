@@ -4,99 +4,72 @@ from IPython.display import HTML
 from pandas.core.indexing import _non_reducing_slice
 import pandas as pd
 
-if pd.__version__ >= '0.18.1':
+if pd.__version__ >= '0.20.0':
+    from pandas.io.formats.style import Styler
+elif pd.__version__ >= '0.18.1':
     from pandas.formats.style import Styler
 else:
     from pandas.core.style import Styler
 
 import numpy as np
 
-from collections import namedtuple
+from copy import copy
+from collections import namedtuple, OrderedDict
 from itertools import product
 from functools import partial
+from operator import methodcaller
 import warnings
 
 from .formatters import as_percent, as_money, as_unit, as_currency, LOCALE_OBJ
 
 
-def apply_pretty_globals():
-    """Apply global CSS to make dataframes pretty.
-
-    This function injects HTML and CSS code into the notebook in order to make
-    tables look pretty. Third party hosts of notebooks advise against using
-    this and some don't support it. As long as you are okay with HTML injection
-    in your notebook, go ahead and use this. Otherwise use the ``PrettyPandas``
-    class.
-    """
-
-    return HTML("""
-        <style type='text/css'>
-            /* Pretty Pandas Dataframes */
-            .dataframe * {border-color: #c0c0c0 !important;}
-            .dataframe th{background: #eee;}
-            .dataframe td{
-                background: #fff;
-                text-align: right;
-                min-width:5em;
-            }
-
-            /* Format summary rows */
-            .dataframe-summary-row tr:last-child,
-            .dataframe-summary-col td:last-child{
-                background: #eee;
-                font-weight: 500;
-            }
-        </style>
-        """)
-
-
 Formatter = namedtuple("Formatter", "subset, function")
 
 
-class PrettyPandas(Styler):
+def axis_is_rows(axis):
+    return axis == 0 or axis == 'rows'
+
+
+def axis_is_cols(axis):
+    return axis == 1 or axis == 'columns'
+
+
+class Aggregate(object):
+
+    def __init__(self, title, func, subset=None, axis=0, raw=False, *args, **kwargs):
+        self.title = title
+        self.subset = subset
+        self.axis = axis
+        self.raw = raw
+
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def apply(self, df):
+
+        if self.subset:
+            if axis_is_rows(self.axis):
+                df = df[self.subset]
+            if axis_is_cols(self.axis):
+                df = df.loc[self.subset]
+
+        result = df.agg(self.func, axis=self.axis, *self.args, **self.kwargs)
+        result.name = self.title
+        return result
+
+
+class PrettyPandas(object):
     """Pretty pandas dataframe Styles.
 
     Parameters
     ----------
     :param data: Series or DataFrame
-    :param precision: int
-        precision to round floats to, defaults to pd.options.display.precision
-    :param table_styles: list-like, default None
-        list of {selector: (attr, value)} dicts. These values overwrite the
-        default style.
-    :param uuid: str, default None
-        a unique identifier to avoid CSS collisons; generated automatically
-    :param caption: str, default None
-        caption to attach to the table
     :param summary_rows:
         list of single-row dataframes to be appended as a summary
     :param summary_cols:
         list of single-row dataframes to be appended as a summary
     """
-
-    #: Default colour for header backgrounds
-    DEFAULT_BACKGROUND = "#eee"
-
-    #: Default color for table borders
-    DEFAULT_BORDER_COLOUR = '#c0c0c0'
-
-    #: CSS style for header rows and column.
-    HEADER_PROPERTIES = [('background', DEFAULT_BACKGROUND),
-                         ('font-weight', '500')]
-
-    #: CSS style for summary content cells.
-    SUMMARY_PROPERTIES = HEADER_PROPERTIES
-
-    #: Base styles
-    STYLES = [
-        {'selector': 'th', 'props': HEADER_PROPERTIES},
-        {'selector': 'td', 'props': [('text-align', 'right'),
-                                     ('min-width', '3em')]},
-        {'selector': '*', 'props': [('border-color', DEFAULT_BORDER_COLOUR)]},
-    ]
-
-    #: Default local for formatting functions
-    DEFAULT_LOCALE = LOCALE_OBJ
 
     def __init__(self,
                  data,
@@ -106,24 +79,39 @@ class PrettyPandas(Styler):
                  *args,
                  **kwargs):
 
-        kwargs['table_styles'] = self.STYLES + kwargs.get('table_styles', [])
-
+        self.data = data
         self.summary_rows = summary_rows or []
         self.summary_cols = summary_cols or []
         self.formatters = formatters or []
 
-        return super(self.__class__, self).__init__(data, *args, **kwargs)
+    def _copy(self):
+        return self.__class__(
+            self.data,
+            summary_rows=self.summary_rows[:],
+            summary_cols=self.summary_cols[:],
+            formatters=self.formatters[:],
+        )
+
+    def _add_summary(self, agg):
+        new = self._copy()
+
+        if axis_is_rows(agg.axis):
+            new.summary_rows += [agg]
+
+        elif axis_is_cols(agg.axis):
+            new.summary_cols += [agg]
+
+        else:
+            raise ValueError("Invalid axis supplied.")
+
+        return new
 
     @classmethod
     def set_locale(cls, locale):
         """Set the PrettyPandas default locale."""
         cls.DEFAULT_LOCALE = locale
 
-    def _append_selector(self, selector, *props):
-        """Add a CSS selector and style to this Styler."""
-        self.table_styles.append({'selector': selector, 'props': props})
-
-    def summary(self, func=np.sum, title='Total', axis=0, **kwargs):
+    def summary(self, func=methodcaller('sum'), title='Total', axis=0, subset=None, *args, **kwargs):
         """Add multiple summary rows or columns to the dataframe.
 
         Parameters
@@ -137,35 +125,16 @@ class PrettyPandas(Styler):
 
         The results of summary can be chained together.
         """
-        return self.multi_summary([func], [title], axis, **kwargs)
 
-    def multi_summary(self, funcs, titles, axis=0, **kwargs):
-        """Add multiple summary rows or columns to the dataframe.
-
-        Parameters
-        ----------
-        :param funcs: Iterable of functions to be used for a summary.
-        :param titles: Iterable of titles in the same order as the functions.
-        :param axis:
-            Same as numpy and pandas axis argument. A value of None will cause
-            the summary to be applied to both rows and columns.
-        :param kwargs: Keyword arguments passed to all the functions.
-        """
         if axis is None:
-            return self.multi_summary(funcs, titles, axis=0, **kwargs)\
-                       .multi_summary(funcs, titles, axis=1, **kwargs)
-
-        output = [self.data.apply(f, axis=axis, **kwargs).to_frame(t)
-                  for f, t in zip(funcs, titles)]
-
-        if axis == 0:
-            self.summary_rows += [row.T for row in output]
-        elif axis == 1:
-            self.summary_cols += output
+            return (
+                self
+                .summary(func=func, title=title, axis=0, subset=subset, *args, **kwargs)
+                .summary(func=func, title=title, axis=1, subset=subset, *args, **kwargs)
+            )
         else:
-            ValueError("Invalid axis selected. Can only use 0, 1, or None.")
-
-        return self
+            agg = Aggregate(title, func, subset=subset, axis=axis, *args, **kwargs)
+            return self._add_summary(agg)
 
     def total(self, title="Total", **kwargs):
         """Add a total summary to this table.
@@ -173,7 +142,7 @@ class PrettyPandas(Styler):
         :param title: Title to be displayed.
         :param kwargs: Keyword arguments passed to ``numpy.sum``.
         """
-        return self.summary(np.sum, title, **kwargs)
+        return self.summary(methodcaller('sum'), title, **kwargs)
 
     def average(self, title="Average", **kwargs):
         """Add a mean summary to this table.
@@ -181,7 +150,7 @@ class PrettyPandas(Styler):
         :param title: Title to be displayed.
         :param kwargs: Keyword arguments passed to ``numpy.mean``.
         """
-        return self.summary(np.mean, title, **kwargs)
+        return self.summary(methodcaller('mean'), title, **kwargs)
 
     def median(self, title="Median", **kwargs):
         """Add a median summary to this table.
@@ -189,7 +158,7 @@ class PrettyPandas(Styler):
         :param title: Title to be displayed.
         :param kwargs: Keyword arguments passed to ``numpy.median``.
         """
-        return self.summary(np.median, title, **kwargs)
+        return self.summary(methodcaller('median'), title, **kwargs)
 
     def max(self, title="Maximum", **kwargs):
         """Add a maximum summary to this table.
@@ -197,7 +166,7 @@ class PrettyPandas(Styler):
         :param title: Title to be displayed.
         :param kwargs: Keyword arguments passed to ``numpy.max``.
         """
-        return self.summary(np.max, title, **kwargs)
+        return self.summary(methodcaller('max'), title, **kwargs)
 
     def min(self, title="Minimum", **kwargs):
         """Add a minimum summary to this table.
@@ -205,166 +174,45 @@ class PrettyPandas(Styler):
         :param title: Title to be displayed.
         :param kwargs: Keyword arguments passed to ``numpy.min``.
         """
-        return self.summary(np.min, title, **kwargs)
+        return self.summary(methodcaller('min'), title, **kwargs)
 
-    def as_percent(self, subset=None, precision=None, locale=None):
-        """Represent subset of dataframe as percentages.
+    def cleaned_aggregates(self, summaries):
+        titles = set()
+        for agg in summaries:
+            title = agg.title
+            i = 1
+            while agg.title in titles:
+                agg.title = "{}_{}".format(title, i)
+                i += 1
 
-        Parameters:
-        -----------
-        :param subset: Pandas slice to convert to percentages
-        :param precision: int
-            Number of decimal places to round to
-        :param locale: Locale to be used (e.g. 'en_US')
-        """
-        # TODO: Find good way to implement precision
-
-        add_formatter = partial(self._format_cells,
-                                as_percent,
-                                subset=subset)
-        if locale is not None:
-            return add_formatter(locale=locale)
-        else:
-            return add_formatter(locale=self.DEFAULT_LOCALE)
-
-    def as_currency(self, subset=None, currency='USD', locale=None):
-        """Represent subset of dataframe as currency.
-
-        Parameters:
-        -----------
-        :param subset: Pandas slice to convert to percentages
-        :param currency: Currency or currency symbol to be used
-        :param locale: Locale to be used (e.g. 'en_US')
-        """
-        add_formatter = partial(self._format_cells,
-                                as_currency,
-                                subset=subset,
-                                currency=currency)
-
-        if locale is not None:
-            return add_formatter(locale=locale)
-        else:
-            return add_formatter(locale=self.DEFAULT_LOCALE)
-
-    def as_unit(self, unit, subset=None, precision=None, location='prefix'):
-        """Represent subset of dataframe as a special unit.
-
-        Parameters:
-        -----------
-        :param unit: string representing unit to be used.
-        :param subset: Pandas slice to convert to percentages
-        :param precision: int
-            Number of decimal places to round to
-        :param location: 'prefix' or 'suffix' indicating where the currency symbol
-            should be.
-        """
-        precision = self.precision if precision is None else precision
-
-        return self._format_cells(as_unit,
-                                  subset=subset,
-                                  precision=precision,
-                                  unit=unit,
-                                  location=location)
-
-
-    def as_money(self,
-                 subset=None,
-                 precision=None,
-                 currency='$',
-                 location='prefix'):
-        """[DEPRECATED] Represent subset of dataframe as currency.
-
-        Parameters:
-        -----------
-        :param precision: int
-            Number of decimal places to round to
-        :param subset: Pandas slice to convert to percentages
-        :param currency: Currency string
-        :param location: 'prefix' or 'suffix' indicating where the currency
-            symbol should be.
-        """
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            warnings.warn("`as_money` is depricated in favour of "
-                          "`as_currency`.",
-                          DeprecationWarning)
-
-        precision = self.precision if precision is None else precision
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            return self._format_cells(as_money,
-                                      currency=currency,
-                                      precision=precision,
-                                      subset=subset,
-                                      location=location)
-
-    def _format_cells(self, func, subset=None, **kwargs):
-        """Add formatting function to cells."""
-
-        # Create function closure for formatting operation
-        def fn(*args):
-            return func(*args, **kwargs)
-
-        self.formatters.append(Formatter(subset=subset, function=fn))
-        return self
-
-    def _apply_formatters(self):
-        """Apply all added formatting."""
-        for subset, function in self.formatters:
-            if subset is None:
-                subset = self.data.index
-            else:
-                subset = _non_reducing_slice(subset)
-            self.data.loc[subset] = self.data.loc[subset].applymap(function)
-        return self
+            titles.add(agg.title)
+            yield agg
 
     def _apply_summaries(self):
         """Add all summary rows and columns."""
-        colnames = list(self.data.columns)
-        summary_colnames = [series.columns[0] for series in self.summary_cols]
-        summary_rownames = [series.index[0] for series in self.summary_rows]
 
-        rows, cols = self.data.shape
-        ix_rows = self.data.index.size
-        ix_cols = len(self.data.index.names)
+        as_frame = lambda r: r.to_frame() if isinstance(r, pd.Series) else r
 
-        # Add summary rows and columns
-        self.data = pd.concat([self.data] + self.summary_cols,
-                              axis=1,
-                              ignore_index=False)
-        self.data = pd.concat([self.data] + self.summary_rows,
-                              axis=0,
-                              ignore_index=False)
+        df = self.data
+        _df = df
+        if self.summary_rows:
+            rows = pd.concat(
+                [agg.apply(_df) for agg in self.cleaned_aggregates(self.summary_rows)],
+                axis=1
+            ).T
+            df = pd.concat([df, as_frame(rows)], axis=0)
 
-        # Update CSS styles
-        for i, _ in enumerate(self.summary_rows):
-            index = rows + i + 1
-            self._append_selector('tr:nth-child({})'.format(index),
-                                  *self.SUMMARY_PROPERTIES)
+        if self.summary_cols:
+            cols = pd.concat(
+                [agg.apply(_df) for agg in self.cleaned_aggregates(self.summary_cols)],
+                axis=1
+            )
+            df = pd.concat([df, as_frame(cols)], axis=1)
 
-        for i, _ in enumerate(self.summary_cols):
-            index = cols + ix_cols + i + 1
-            self._append_selector('td:nth-child({})'.format(index),
-                                  *self.SUMMARY_PROPERTIES)
+        return df
 
-        # Sort column names
-        self.data = self.data[colnames + summary_colnames]
+    def render(self):
+        return self._apply_summaries().style.render()
 
-        # Fix shared summary cells to be empty
-        for row, col in product(summary_rownames, summary_colnames):
-            self.data.loc[row, col] = ''
-
-        return self
-
-    def _translate(self):
-        """Apply styles and formats before rendering."""
-        data = self.data.copy()
-
-        self._apply_summaries()
-        self._apply_formatters()
-        result = super(self.__class__, self)._translate()
-
-        # Revert changes to inner data
-        self.data = data
-        return result
+    def _repr_html_(self):
+        return self.render()
