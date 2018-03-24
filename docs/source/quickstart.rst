@@ -213,4 +213,3 @@ Indexing`_.
 
 .. _Pandas Indexing: http://pandas.pydata.org/pandas-docs/stable/indexing.html
 .. _Pandas Advanced Indexing: http://pandas.pydata.org/pandas-docs/stable/advanced.html
-
