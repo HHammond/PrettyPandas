@@ -95,6 +95,5 @@ def test_mulitindex():
                        'D': [4, 3],
                        'C': [6, 7]})
 
-    output = PrettyPandas(df.set_index(['A', 'B'])).total(axis=1)._apply_summaries()
-
-    assert (output[output.columns[-1]] == 10).all()
+    with pytest.raises(ValueError):
+        output = PrettyPandas(df.set_index(['A', 'B'])).total(axis=1)._apply_summaries()

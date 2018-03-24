@@ -20,8 +20,6 @@ from functools import partial
 from operator import methodcaller
 import warnings
 
-from .formatters import as_percent, as_money, as_unit, as_currency, LOCALE_OBJ
-
 
 Formatter = namedtuple("Formatter", "subset, function")
 
@@ -226,15 +224,16 @@ class PrettyPandas(object):
         row_titles = [a.title for a in self._cleaned_summary_rows]
         col_titles = [a.title for a in self._cleaned_summary_cols]
         common = pd.IndexSlice[row_titles, col_titles]
-
-        def handle_na(df):
-            df.loc[common] = df.loc[common].fillna('')
-            return df
-
         row_ix = pd.IndexSlice[row_titles, :]
         col_ix = pd.IndexSlice[:, col_titles]
+
+        def handle_na(df):
+            df.loc[col_ix] = df.loc[col_ix].fillna('')
+            df.loc[row_ix] = df.loc[row_ix].fillna('')
+            return df
+
         return (
-            self.apply()
+            self._apply_summaries()
             .pipe(handle_na)
             .style
             .applymap(lambda r: 'font-weight: 900', subset=row_ix)

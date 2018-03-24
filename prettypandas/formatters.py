@@ -1,5 +1,5 @@
 from numbers import Number, Integral
-from functools import partial
+from functools import partial, wraps
 import locale
 import warnings
 
@@ -10,14 +10,32 @@ LOCALE, ENCODING = locale.getlocale()
 LOCALE_OBJ = Locale(LOCALE or "en_US")
 
 
-def format_number(v, number_format, prefix='', suffix=''):
+def surpress_formatting_errors(fn):
+    """
+    I know this is dangerous and the wrong way to solve the problem, but when
+    using both row and columns summaries it's easier to just swallow errors
+    so users can format their tables how they need.
+    """
+    @wraps(fn)
+    def inner(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except ValueError:
+            return ""
+    return inner
+
+
+def format_number(number_format, prefix='', suffix=''):
     """Format a number to a string."""
-    if isinstance(v, Number):
-        return ("{{}}{{:{}}}{{}}"
-                .format(number_format)
-                .format(prefix, v, suffix))
-    else:
-        raise TypeError("Numberic type required.")
+    @surpress_formatting_errors
+    def inner(v):
+        if isinstance(v, Number):
+            return ("{{}}{{:{}}}{{}}"
+                    .format(number_format)
+                    .format(prefix, v, suffix))
+        else:
+            raise TypeError("Numberic type required.")
+    return inner
 
 
 def as_percent(v, precision=2):
@@ -32,10 +50,12 @@ def as_percent(v, precision=2):
     if not isinstance(precision, Integral):
         raise TypeError("Precision must be an integer.")
 
-    return format_number(v, "0.{}%".format(precision))
+    return surpress_formatting_errors(
+        format_number("0.{}%".format(precision))
+    )
 
 
-def as_unit(v, unit, precision=2, location='suffix'):
+def as_unit(unit, precision=2, location='suffix'):
     """Convert value to unit.
 
     Parameters:
@@ -58,33 +78,14 @@ def as_unit(v, unit, precision=2, location='suffix'):
     else:
         raise ValueError("location must be either 'prefix' or 'suffix'.")
 
-    return formatter(v, "0.{}f".format(precision))
+    return surpress_formatting_errors(
+        formatter("0.{}f".format(precision))
+    )
 
 
-as_percent = partial(numbers.format_percent,
-                     locale=LOCALE_OBJ)
-"""Format number as percentage."""
+def as_currency(currency='USD', locale=LOCALE_OBJ):
+    @surpress_formatting_errors
+    def inner(v):
+        return numbers.format_currency(v, currency=currency, locale=LOCALE_OBJ)
+    return inner
 
-as_currency = partial(numbers.format_currency,
-                      currency='USD',
-                      locale=LOCALE_OBJ)
-"""Format number as currency."""
-
-
-def as_money(v, precision=2, currency='$', location='prefix'):
-    """[DEPRECATED] Convert value to currency.
-
-    Parameters:
-    -----------
-    :param v: numerical value
-    :param precision: int
-        decimal places to round to
-    :param currency: string representing currency
-    :param location:
-        'prefix' or 'suffix' representing where the currency symbol falls
-        relative to the value
-    """
-    warnings.warn("Depricated in favour of `as_currency`.",
-                  DeprecationWarning)
-
-    return as_unit(v, currency, precision=precision, location=location)
