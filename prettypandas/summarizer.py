@@ -59,15 +59,17 @@ class Formatter(object):
 
 
 class PrettyPandas(object):
-    """Pretty pandas dataframe Styles.
+    """PrettyPandas
 
     Parameters
     ----------
-    :param data: Series or DataFrame
+    :param data: DataFrame.
     :param summary_rows:
-        list of single-row dataframes to be appended as a summary
+        list of Aggregate objects to be appended as a summary.
     :param summary_cols:
-        list of single-row dataframes to be appended as a summary
+        list of Aggregate objects to be appended as a summary.
+    :param formatters:
+        List of Formatter objects to format.
     """
 
     def __init__(self,
