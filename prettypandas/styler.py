@@ -116,11 +116,12 @@ class PrettyPandas(object):
 
         Parameters
         ----------
-        :param func: Iterable of functions to be used for a summary.
-        :param titles: Iterable of titles in the same order as the functions.
+        :param func: function to be used for a summary.
+        :param titles: Title for this summary column.
         :param axis:
             Same as numpy and pandas axis argument. A value of None will cause
             the summary to be applied to both rows and columns.
+        :param args: Positional arguments passed to all the functions.
         :param kwargs: Keyword arguments passed to all the functions.
 
         The results of summary can be chained together.
@@ -176,7 +177,7 @@ class PrettyPandas(object):
         """
         return self.summary(methodcaller('min'), title, **kwargs)
 
-    def cleaned_aggregates(self, summaries):
+    def _cleaned_aggregates(self, summaries):
         titles = set()
         for agg in summaries:
             title = agg.title
@@ -188,31 +189,60 @@ class PrettyPandas(object):
             titles.add(agg.title)
             yield agg
 
+    @property
+    def _cleaned_summary_rows(self):
+        return list(self._cleaned_aggregates(self.summary_rows))
+
+    @property
+    def _cleaned_summary_cols(self):
+        return list(self._cleaned_aggregates(self.summary_cols))
+
     def _apply_summaries(self):
         """Add all summary rows and columns."""
 
         as_frame = lambda r: r.to_frame() if isinstance(r, pd.Series) else r
 
         df = self.data
+
+        if df.index.nlevels > 1:
+            raise ValueError("You cannot currently have both summary rows and columns on a MultiIndex.")
+
         _df = df
         if self.summary_rows:
-            rows = pd.concat(
-                [agg.apply(_df) for agg in self.cleaned_aggregates(self.summary_rows)],
-                axis=1
-            ).T
+            rows = pd.concat([agg.apply(_df) for agg in self._cleaned_summary_rows], axis=1).T
             df = pd.concat([df, as_frame(rows)], axis=0)
 
         if self.summary_cols:
-            cols = pd.concat(
-                [agg.apply(_df) for agg in self.cleaned_aggregates(self.summary_cols)],
-                axis=1
-            )
+            cols = pd.concat([agg.apply(_df) for agg in self._cleaned_summary_cols], axis=1)
             df = pd.concat([df, as_frame(cols)], axis=1)
 
         return df
 
+    def to_frame(self):
+        return self._apply_summaries()
+
+    @property
+    def style(self):
+        row_titles = [a.title for a in self._cleaned_summary_rows]
+        col_titles = [a.title for a in self._cleaned_summary_cols]
+        common = pd.IndexSlice[row_titles, col_titles]
+
+        def handle_na(df):
+            df.loc[common] = df.loc[common].fillna('')
+            return df
+
+        row_ix = pd.IndexSlice[row_titles, :]
+        col_ix = pd.IndexSlice[:, col_titles]
+        return (
+            self.apply()
+            .pipe(handle_na)
+            .style
+            .applymap(lambda r: 'font-weight: 900', subset=row_ix)
+            .applymap(lambda r: 'font-weight: 900', subset=col_ix)
+        )
+
     def render(self):
-        return self._apply_summaries().style.render()
+        return self.style.render()
 
     def _repr_html_(self):
         return self.render()
