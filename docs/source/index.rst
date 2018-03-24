@@ -10,6 +10,17 @@ PrettyPandas is an extension to the Pandas DataFrame class that helps you
 create report qualitiy tables with a simple API.
 
 
+.. code-block:: python
+
+   (
+       df
+       .pipe(PrettyPandas)
+       .as_currency('GBP', subset='A')
+       .as_percent(subset='B')
+       .total()
+       .average()
+   )
+
 .. image:: _static/Images/API@2x.png
     :width: 500px
 

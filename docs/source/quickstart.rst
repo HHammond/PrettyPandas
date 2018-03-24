@@ -64,13 +64,53 @@ from a function which takes an array-like structure as a list.
 
 .. code-block:: python
 
-    def count_greater_than_five(items):
-        return sum(item > 5 for item in items)
+    def count_greater_than_zero(column):
+        return (column > 0).sum()
 
-    PrettyPandas(df).summary(count_greater_than_five, title="> 5")
+    PrettyPandas(df).summary(count_greater_than_zero, title="> 0")
 
 .. image:: _static/Images/custom_fn@2x.png
     :width: 287px
+
+
+Converting Back to Pandas DataFrame
+-----------------------------------
+
+``.to_frame()``
+^^^^^^^^^^^^^^^
+
+After adding summary rows or columns you can get a DataFrame with your changes
+applied by calling the ``._to_frame``.
+
+For example the following code would add a total to your DataFrame and return
+it back to a Pandas native DataFrame.
+
+.. code-block:: python
+
+    (
+        df
+        .pipe(PrettyPandas)
+        .total(axis=1)
+        .to_frame()
+    )
+
+
+``.style``
+^^^^^^^^^^
+
+The ``.style`` property allows you to drop right into the Pandas Style API.
+This code would allow you to compute a summary, format the table using
+percentages, and apply a backgrouned gradient to a table:
+
+.. code-block:: python
+
+    (
+        df.pipe(PrettyPandas)
+        .as_percent(precision=0)
+        .median()
+        .style
+        .background_gradient()
+    )
 
 
 Formatting Numbers
@@ -142,7 +182,7 @@ argument needs to take in a `pandas.Index` to specify the row.
 .. code-block:: python
 
     # Format the row with row-index 3
-    PrettyPandas(df, precision=2).as_percent(subset=pd.IndexSlice[3,:])
+    PrettyPandas(df).as_percent(subset=pd.IndexSlice[3,:], precision=2)
 
 .. image:: _static/Images/format_row@2x.png
     :width: 294px
@@ -154,17 +194,18 @@ The following example shows how to select rows in a multi-index:
 
 .. code-block:: python
 
-    idx = pd.IndexSlice
-    first_row_idx = idx[:, 1]   # select all with index like (*, 1)
-    second_row_idx = idx[:, 2]  # select all with index like (*, 2)
+    first_row_idx = pd.IndexSlice[0, :]
+    second_row_idx = pd.IndexSlice[1, :]
 
-    (PrettyPandas(df2)
-     .as_money(subset=idx[first_row_idx, :])
-     .as_percent(subset=idx[second_row_idx, :])
-     )
+    (
+        df.pipe(PrettyPandas)
+        .as_currency(subset=first_row_idx)
+        .as_percent(subset=second_row_idx)
+        .total(axis=1)
+    )
 
 .. image:: _static/Images/format_complex@2x.png
-    :width: 315px
+    :width: 370px
 
 For more info on Pandas indexing, read `Pandas Indexing`_ and `Pandas Advanced
 Indexing`_.

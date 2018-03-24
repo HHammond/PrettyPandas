@@ -58,7 +58,7 @@ class Formatter(object):
         return styler.format(self.formatter, *self.args, **self.kwargs)
 
 
-class Summarizer(object):
+class PrettyPandas(object):
     """Pretty pandas dataframe Styles.
 
     Parameters
