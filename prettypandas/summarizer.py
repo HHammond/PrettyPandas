@@ -1,16 +1,17 @@
 from __future__ import unicode_literals
 
+from itertools import count
 from operator import methodcaller
 import pandas as pd
 from .formatters import as_percent, as_currency, as_unit, LOCALE_OBJ
 
 
 def _axis_is_rows(axis):
-    return axis == 0 or axis == 'rows'
+    return axis in [0, 'rows', 'row', 'down']
 
 
 def _axis_is_cols(axis):
-    return axis == 1 or axis == 'columns' or axis == 'index'
+    return axis in [1, 'columns', 'cols', 'col', 'index', 'across']
 
 
 class Aggregate(object):
@@ -59,9 +60,11 @@ class Aggregate(object):
             if _axis_is_cols(self.axis):
                 df = df.loc[self.subset]
 
-        result = df.agg(self.func, axis=self.axis, *self.args, **self.kwargs)
-        result.name = self.title
-        return result
+        return (
+            df
+            .agg(self.func, axis=self.axis, *self.args, **self.kwargs)
+            .rename(self.title)
+        )
 
 
 class Formatter(object):
@@ -82,11 +85,23 @@ class Formatter(object):
         self.args = args
         self.kwargs = kwargs
 
+    @staticmethod
+    def _replace_errors_with_empty_string(fn):
+        """Attempt to format value and if failed use empty string"""
+        def call(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except Exception:
+                return ''
+        return call
+
     def apply(self, styler):
         """Apply Summary over Pandas Styler"""
-        return styler.format(self.formatter, *self.args, **self.kwargs)
+        formatter = self._replace_errors_with_empty_string(self.formatter)
+        return styler.format(formatter, *self.args, **self.kwargs)
 
 
+@pd.api.extensions.register_dataframe_accessor('summarize')
 class PrettyPandas(object):
     """PrettyPandas
 
@@ -109,31 +124,31 @@ class PrettyPandas(object):
                  *args,
                  **kwargs):
 
-        self.data = data
-        self.summary_rows = summary_rows or []
-        self.summary_cols = summary_cols or []
-        self.formatters = formatters or []
+        self._data = data
+        self._summary_rows = summary_rows or []
+        self._summary_cols = summary_cols or []
+        self._formatters = formatters or []
 
     def _copy(self):
         return self.__class__(
-            self.data,
-            summary_rows=self.summary_rows[:],
-            summary_cols=self.summary_cols[:],
-            formatters=self.formatters[:],
+            self._data,
+            summary_rows=self._summary_rows[:],
+            summary_cols=self._summary_cols[:],
+            formatters=self._formatters[:],
         )
 
     def _add_formatter(self, formatter):
         new = self._copy()
-        new.formatters += [formatter]
+        new._formatters.append(formatter)
         return new
 
     def _add_summary(self, agg):
         new = self._copy()
 
         if _axis_is_rows(agg.axis):
-            new.summary_rows += [agg]
+            new._summary_rows.append(agg)
         elif _axis_is_cols(agg.axis):
-            new.summary_cols += [agg]
+            new._summary_cols.append(agg)
         else:
             raise ValueError("Invalid axis supplied.")
 
@@ -142,33 +157,32 @@ class PrettyPandas(object):
     def _cleaned_aggregates(self, summaries):
         titles = set()
         for agg in summaries:
-            title = agg.title
-            i = 1
-            while agg.title in titles:
-                agg.title = "{}_{}".format(title, i)
-                i += 1
+            original_title = agg.title
+
+            for i in count(1):
+                if agg.title in titles:
+                    agg.title = "{}_{}".format(original_title, i)
+                else:
+                    break
 
             titles.add(agg.title)
             yield agg
 
     @property
     def _cleaned_summary_rows(self):
-        return list(self._cleaned_aggregates(self.summary_rows))
+        return list(self._cleaned_aggregates(self._summary_rows))
 
     @property
     def _cleaned_summary_cols(self):
-        return list(self._cleaned_aggregates(self.summary_cols))
+        return list(self._cleaned_aggregates(self._summary_cols))
 
     def _apply_summaries(self):
         """Add all summary rows and columns."""
 
         def as_frame(r):
-            if isinstance(r, pd.Series):
-                return r.to_frame()
-            else:
-                return r
+            return r.to_frame if isinstance(r, pd.Series) else r
 
-        df = self.data
+        df = as_frame(self._data)
 
         if df.index.nlevels > 1:
             raise ValueError(
@@ -177,12 +191,12 @@ class PrettyPandas(object):
             )
 
         _df = df
-        if self.summary_rows:
+        if self._summary_rows:
             rows = pd.concat([agg.apply(_df)
                               for agg in self._cleaned_summary_rows], axis=1).T
             df = pd.concat([df, as_frame(rows)], axis=0)
 
-        if self.summary_cols:
+        if self._summary_cols:
             cols = pd.concat([agg.apply(_df)
                               for agg in self._cleaned_summary_cols], axis=1)
             df = pd.concat([df, as_frame(cols)], axis=1)
@@ -220,7 +234,7 @@ class PrettyPandas(object):
             .applymap(lambda r: 'font-weight: 900', subset=col_ix)
         )
 
-        for formatter in self.formatters:
+        for formatter in self._formatters:
             styler = formatter.apply(styler)
 
         return styler

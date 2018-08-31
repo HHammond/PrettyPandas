@@ -31,14 +31,14 @@ def test_creation(dataframe):
         assert True
 
     p1 = PrettyPandas(dataframe)
-    assert p1.summary_rows == []
-    assert p1.summary_cols == []
-    assert p1.formatters == []
+    assert p1._summary_rows == []
+    assert p1._summary_cols == []
+    assert p1._formatters == []
 
     p2 = PrettyPandas(dataframe, summary_rows=['test'])
-    assert p2.summary_rows == ['test']
-    assert p1.summary_cols == []
-    assert p1.formatters == []
+    assert p2._summary_rows == ['test']
+    assert p1._summary_cols == []
+    assert p1._formatters == []
 
 
 def test_data_safety(dataframe):
@@ -48,12 +48,12 @@ def test_data_safety(dataframe):
     df.total()._apply_summaries()
 
     assert all(dataframe == df1)
-    assert all(df.data == df1)
+    assert all(df._data == df1)
 
 
 def test_summary(dataframe):
     p1 = PrettyPandas(dataframe).total()
-    actual = list(p1.data.sum())
+    actual = list(p1._data.sum())
 
     r = p1._apply_summaries()
     row = r.iloc[-1]
@@ -68,24 +68,24 @@ def test_summary_fns(dataframe):
     PrettyPandas(dataframe).min()
 
     out = PrettyPandas(dataframe).total()
-    assert len(out.summary_rows) == 1
-    assert len(out.summary_cols) == 0
+    assert len(out._summary_rows) == 1
+    assert len(out._summary_cols) == 0
 
     out = PrettyPandas(dataframe).total(axis=1)
-    assert len(out.summary_rows) == 0
-    assert len(out.summary_cols) == 1
+    assert len(out._summary_rows) == 0
+    assert len(out._summary_cols) == 1
 
     out = PrettyPandas(dataframe).total(axis=None)
-    assert len(out.summary_rows) == 1
-    assert len(out.summary_cols) == 1
+    assert len(out._summary_rows) == 1
+    assert len(out._summary_cols) == 1
 
     out = PrettyPandas(dataframe).min().max()
-    assert len(out.summary_rows) == 2
-    assert len(out.summary_cols) == 0
+    assert len(out._summary_rows) == 2
+    assert len(out._summary_cols) == 0
 
     out = PrettyPandas(dataframe).min().max(axis=1)
-    assert len(out.summary_rows) == 1
-    assert len(out.summary_cols) == 1
+    assert len(out._summary_rows) == 1
+    assert len(out._summary_cols) == 1
 
 
 def test_mulitindex():
