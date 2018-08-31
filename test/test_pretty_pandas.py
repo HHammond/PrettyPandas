@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import copy
 
 import pytest
@@ -10,11 +12,18 @@ from prettypandas import PrettyPandas
 @pytest.fixture()
 def dataframe():
     np.random.seed(24)
-    df = pd.DataFrame({'A': np.linspace(1, 10, 10)})
-    df = pd.concat([df, pd.DataFrame(np.random.randn(10, 4),
-                                     columns=list('BCDE'))],
-                   axis=1)
+    df = pd.DataFrame({
+        'A': np.linspace(1, 10, 10),
+        'B': np.random.normal(10, 4),
+        'C': np.random.normal(10, 4),
+        'D': np.random.normal(10, 4),
+    })
     return df
+
+
+@pytest.fixture()
+def series(dataframe):
+    return dataframe.A
 
 
 @pytest.fixture()
@@ -95,4 +104,47 @@ def test_mulitindex():
                        'C': [6, 7]})
 
     with pytest.raises(ValueError):
-        output = PrettyPandas(df.set_index(['A', 'B'])).total(axis=1)._apply_summaries()
+        PrettyPandas(df.set_index(['A', 'B'])).total(axis=1)._apply_summaries()
+
+
+def test_series_works(series):
+    PrettyPandas(series).total()
+    assert True
+
+
+def test_summaries_are_applied_in_order(dataframe):
+    df = dataframe.summarize
+    N = 100
+
+    for i in range(N):
+        df = df.total()
+    df = df.to_frame()
+
+    generated_columns = [
+        c for c in df.index
+        if isinstance(c, basestring) and c.startswith('Total')
+    ]
+
+    expected_columns = (
+        ['Total']
+        + ['Total {}'.format(i + 1) for i in range(1, N)]
+    )
+
+    assert generated_columns == expected_columns
+
+
+def test_pandas_extension(dataframe, series):
+    ext_df = dataframe.summarize.total()
+    normal_df = PrettyPandas(dataframe).total()
+
+    pd.testing.assert_frame_equal(
+        ext_df.to_frame(),
+        normal_df.to_frame()
+    )
+
+    ext_s = series.summarize.total()
+    normal_s = PrettyPandas(series).total()
+    pd.testing.assert_frame_equal(
+        ext_s.to_frame(),
+        normal_s.to_frame()
+    )

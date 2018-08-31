@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
-from itertools import count
+from collections import OrderedDict
+import functools
+import itertools
 from operator import methodcaller
 import pandas as pd
 from .formatters import as_percent, as_currency, as_unit, LOCALE_OBJ
@@ -15,7 +17,7 @@ def _axis_is_cols(axis):
 
 
 class Aggregate(object):
-    """Aggreagte
+    """Aggregate
 
     Wrapper to calculate aggregate row on datafame.
 
@@ -88,12 +90,14 @@ class Formatter(object):
     @staticmethod
     def _replace_errors_with_empty_string(fn):
         """Attempt to format value and if failed use empty string"""
-        def call(*args, **kwargs):
+
+        @functools.wraps(fn)
+        def caller(*args, **kwargs):
             try:
                 return fn(*args, **kwargs)
             except Exception:
                 return ''
-        return call
+        return caller
 
     def apply(self, styler):
         """Apply Summary over Pandas Styler"""
@@ -101,6 +105,7 @@ class Formatter(object):
         return styler.format(formatter, *self.args, **self.kwargs)
 
 
+@pd.api.extensions.register_series_accessor('summarize')
 @pd.api.extensions.register_dataframe_accessor('summarize')
 class PrettyPandas(object):
     """PrettyPandas
@@ -123,7 +128,6 @@ class PrettyPandas(object):
                  formatters=None,
                  *args,
                  **kwargs):
-
         self._data = data
         self._summary_rows = summary_rows or []
         self._summary_cols = summary_cols or []
@@ -159,9 +163,9 @@ class PrettyPandas(object):
         for agg in summaries:
             original_title = agg.title
 
-            for i in count(1):
+            for i in itertools.count(2):
                 if agg.title in titles:
-                    agg.title = "{}_{}".format(original_title, i)
+                    agg.title = "{} {}".format(original_title, i)
                 else:
                     break
 
@@ -180,7 +184,7 @@ class PrettyPandas(object):
         """Add all summary rows and columns."""
 
         def as_frame(r):
-            return r.to_frame if isinstance(r, pd.Series) else r
+            return r.to_frame() if isinstance(r, pd.Series) else r
 
         df = as_frame(self._data)
 
@@ -190,16 +194,17 @@ class PrettyPandas(object):
                 "MultiIndex."
             )
 
-        _df = df
+        unaltered_df = df
         if self._summary_rows:
-            rows = pd.concat([agg.apply(_df)
-                              for agg in self._cleaned_summary_rows], axis=1).T
-            df = pd.concat([df, as_frame(rows)], axis=0)
+            rows = pd.DataFrame(OrderedDict([
+                (agg.title, agg.apply(unaltered_df))
+                for agg in self._cleaned_summary_rows
+            ])).T
+            df = pd.concat([df, rows])
 
         if self._summary_cols:
-            cols = pd.concat([agg.apply(_df)
-                              for agg in self._cleaned_summary_cols], axis=1)
-            df = pd.concat([df, as_frame(cols)], axis=1)
+            for agg in self._cleaned_summary_cols:
+                df[agg.title] = agg.apply(unaltered_df)
 
         return df
 

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from numbers import Number, Integral
 from functools import partial, wraps
 import locale
