@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
+from six import string_types
 from prettypandas import PrettyPandas
 
 
@@ -122,7 +123,7 @@ def test_summaries_are_applied_in_order(dataframe):
 
     generated_columns = [
         c for c in df.index
-        if isinstance(c, basestring) and c.startswith('Total')
+        if isinstance(c, string_types) and c.startswith('Total')
     ]
 
     expected_columns = (
