@@ -48,7 +48,6 @@ class Aggregate(object):
         self.title = title
         self.subset = subset
         self.axis = axis
-
         self.func = func
         self.args = args
         self.kwargs = kwargs
@@ -256,6 +255,16 @@ class PrettyPandas(object):
     def __repr__(self):
         return str(self.frame)
 
+    def using(self, func, title, axis=0, subset=None, *args, **kwargs):
+        return self.summary(
+            func=func,
+            title=title,
+            axis=axis,
+            subset=subset,
+            *args,
+            **kwargs
+        )
+
     def summary(self,
                 func=methodcaller('sum'),
                 title='Total',
@@ -263,12 +272,12 @@ class PrettyPandas(object):
                 subset=None,
                 *args,
                 **kwargs):
-        """Add multiple summary rows or columns to the dataframe.
+        """Add a summary row or column to the dataframe.
 
         Parameters
         ----------
         :param func: function to be used for a summary.
-        :param titles: Title for this summary column.
+        :param title: Title for this summary column.
         :param axis:
             Same as numpy and pandas axis argument. A value of None will cause
             the summary to be applied to both rows and columns.

@@ -12,9 +12,11 @@ create report qualitiy tables with a simple API.
 
 .. code-block:: python
 
+   import prettypandas
+
    (
        df
-       .pipe(PrettyPandas)
+       .summarize
        .as_currency('GBP', subset='A')
        .as_percent(subset='B')
        .total()
@@ -28,7 +30,7 @@ create report qualitiy tables with a simple API.
 Features
 --------
 
-- Add summary rows and columns.
+summarize
 - Number formatting for currency, scientific units, and percentages.
 - Chaining commands.
 - Works seamlessly with `Pandas Style API`_.

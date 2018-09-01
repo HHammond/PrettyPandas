@@ -23,23 +23,16 @@ simple:
 
 .. code-block:: python
 
-    PrettyPandas(df).total()
+    df.summarize.total()
 
 .. image:: _static/Images/total@2x.png
     :width: 311px
-
-Or additionally if you want to use Pandas fluent API:
-
-.. code-block:: python
-
-    df.pipe(PrettyPandas).total()
-
 
 PrettyPandas follows a fluent API so you can chain multiple summaries easily:
 
 .. code-block:: python
 
-    df.pipe(PrettyPandas).total().average()
+    df.summarize.total().average()
 
 .. image:: _static/Images/average@2x.png
     :width: 334px
@@ -49,7 +42,7 @@ on --- 0 for columns, 1 for rows, and ``None`` for both.
 
 .. code-block:: python
 
-    PrettyPandas(df).total(axis=1)
+    df.summarize.total(axis=1)
 
 .. image:: _static/Images/alt_axis@2x.png
     :width: 349px
@@ -59,7 +52,7 @@ You can even mix and match summaries applied to different axis.
 Creating a Custom Summary
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :py:meth:`summary <prettypandas.PrettyPandas.summary>` method creates a custom summary
+The :py:meth:`using <prettypandas.PrettyPandas.using>` method creates a custom summary
 from a function which takes an array-like structure as a list.
 
 .. code-block:: python
@@ -67,7 +60,7 @@ from a function which takes an array-like structure as a list.
     def count_greater_than_zero(column):
         return (column > 0).sum()
 
-    PrettyPandas(df).summary(count_greater_than_zero, title="> 0")
+    df.summarize.using(count_greater_than_zero, title="> 0")
 
 .. image:: _static/Images/custom_fn@2x.png
     :width: 287px
@@ -89,7 +82,7 @@ it back to a Pandas native DataFrame.
 
     (
         df
-        .pipe(PrettyPandas)
+        .summarize
         .total(axis=1)
         .to_frame()
     )
@@ -105,7 +98,8 @@ percentages, and apply a backgrouned gradient to a table:
 .. code-block:: python
 
     (
-        df.pipe(PrettyPandas)
+        df
+        .summarize
         .as_percent(precision=0)
         .median()
         .style
@@ -162,14 +156,14 @@ single column, or multiple columns.
 
 .. code-block:: python
 
-    PrettyPandas(df).as_percent(subset='A')  # Format just column A
+    df.summarize.as_percent(subset='A')  # Format just column A
 
 .. image:: _static/Images/format_a@2x.png
     :width: 301px
 
 .. code-block:: python
 
-    PrettyPandas(df).as_percent(subset=['A', 'B'])  # Format columns A and B
+    df.summarize.as_percent(subset=['A', 'B'])  # Format columns A and B
 
 .. image:: _static/Images/format_a_b@2x.png
     :width: 363px
@@ -183,7 +177,7 @@ argument needs to take in a `pandas.Index` to specify the row.
 .. code-block:: python
 
     # Format the row with row-index 3
-    PrettyPandas(df).as_percent(subset=pd.IndexSlice[3,:], precision=2)
+    df.summarize.as_percent(subset=pd.IndexSlice[3,:], precision=2)
 
 .. image:: _static/Images/format_row@2x.png
     :width: 294px
@@ -199,7 +193,8 @@ The following example shows how to select rows in a multi-index:
     second_row_idx = pd.IndexSlice[1, :]
 
     (
-        df.pipe(PrettyPandas)
+        df
+        .summarize
         .as_currency(subset=first_row_idx)
         .as_percent(subset=second_row_idx)
         .total(axis=1)
