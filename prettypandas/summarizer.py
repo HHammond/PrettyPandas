@@ -143,16 +143,16 @@ class PrettyPandas(object):
 
     def _add_formatter(self, formatter):
         new = self._copy()
-        new._formatters.append(formatter)
+        new._formatters += [formatter]
         return new
 
     def _add_summary(self, agg):
         new = self._copy()
 
         if _axis_is_rows(agg.axis):
-            new._summary_rows.append(agg)
+            new._summary_rows += [agg]
         elif _axis_is_cols(agg.axis):
-            new._summary_cols.append(agg)
+            new._summary_cols += [agg]
         else:
             raise ValueError("Invalid axis supplied.")
 
@@ -186,7 +186,7 @@ class PrettyPandas(object):
         def as_frame(r):
             return r.to_frame() if isinstance(r, pd.Series) else r
 
-        df = as_frame(self._data)
+        df = as_frame(self._data).copy()
 
         if df.index.nlevels > 1:
             raise ValueError(
