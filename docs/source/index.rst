@@ -30,7 +30,7 @@ create report qualitiy tables with a simple API.
 Features
 --------
 
-summarize
+- Add summary rows and columns.
 - Number formatting for currency, scientific units, and percentages.
 - Chaining commands.
 - Works seamlessly with `Pandas Style API`_.
