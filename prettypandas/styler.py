@@ -413,17 +413,29 @@ class PrettyPandas(Styler):
 
         return self
 
-    def _translate(self):
-        """Apply styles and formats before rendering."""
+    def get_formatted_df(self, as_html = False):
+        """Apply styles and formats before rendering to a dataframe."""
         data = self.data.copy()
 
         self._apply_summaries()
         self._apply_formatters()
+        formatted_df = self.data
         result = super(self.__class__, self)._translate()
 
         # Revert changes to inner data
         self.data = data
+        
+        if as_html:
+            return result
+        else:
+            if self.replace_all_nans_with is not None:
+                for col in formatted_df:
+                    formatted_df.loc[formatted_df[col].isnull(), col] = self.replace_all_nans_with
+            return formatted_df
 
+    def _translate(self):
+        """Apply styles and formats before rendering."""
+        result = self.get_formatted_df(as_html = True)
         for row in result['body']:
             for cell in row:
                 if not cell.get('is_visible', True):
