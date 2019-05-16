@@ -6,7 +6,7 @@ try:
 except ImportError:
     from pandas.io.formats.style import Styler
 from pandas.core.indexing import _non_reducing_slice
-import pandas.core.common as com
+from pandas.api.types import is_float
 import pandas as pd
 import numpy as np
 
@@ -125,7 +125,7 @@ class PrettyPandas(Styler):
         super(PrettyPandas, self).__init__(data, *args, **kwargs)
         
         def default_display_func(x):
-            if com.is_float(x):
+            if is_float(x):
                 return '{:>.{precision}f}'.format(x, precision=self.precision)
             else:
                 return x
