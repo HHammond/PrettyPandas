@@ -81,7 +81,7 @@ def as_percent_babel(val, precision = None, *args, **kwargs):
 
 
 PERCENT_FORMATTERS = dict(
-    format_fn = as_percent_babel,
+    format_fn = as_percent_with_precision,
     formatters = dict(
         as_percent_babel = as_percent_babel,
         as_percent_with_precision = as_percent_with_precision
