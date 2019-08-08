@@ -46,7 +46,7 @@ def as_percent_with_precision(v, precision=2, scale_1_as_100_percent = True, rep
     return format_number(v, ".{}f".format(precision), suffix='%', **kwargs)
 
 
-def as_unit(v, unit, precision=2, location='suffix', thousands_separator = False, **kwargs):
+def as_unit(v, unit, precision=2, location='suffix', thousands_separator = True, **kwargs):
     """Convert value to unit.
 
     Parameters:

@@ -50,7 +50,7 @@ def apply_pretty_globals():
         """)
 
 
-Formatter = namedtuple("Formatter", "subset, function")
+Formatter = namedtuple("Formatter", "subset, exclude, function")
 
 class PrettyPandas(Styler):
     """Pretty pandas dataframe Styles.
@@ -247,18 +247,16 @@ class PrettyPandas(Styler):
         """
         return self.summary(np.min, title, **kwargs)
 
-    def as_percent(self, subset=None, precision=0, **kwargs):
+    def as_percent(self, precision=0, **kwargs):
         """Represent subset of dataframe as percentages.
 
         Parameters:
         -----------
-        :param subset: Pandas slice to convert to percentages
         :param precision: int
             Number of decimal places to round to
         """
 
         return self._format_cells(PERCENT_FORMATTERS['format_fn'],
-                                  subset=subset, 
                                   precision=precision,
                                   **kwargs)
 
@@ -277,18 +275,16 @@ class PrettyPandas(Styler):
         PERCENT_FORMATTERS['format_fn'] = \
             PERCENT_FORMATTERS['formatters'].get(formatter, formatter)
             
-    def as_currency(self, subset=None, currency='USD', locale=None, **kwargs):
+    def as_currency(self, currency='USD', locale=None, **kwargs):
         """Represent subset of dataframe as currency.
 
         Parameters:
         -----------
-        :param subset: Pandas slice to convert to percentages
         :param currency: Currency or currency symbol to be used
         :param locale: Locale to be used (e.g. 'en_US')
         """
         add_formatter = partial(self._format_cells,
                                 as_currency,
-                                subset=subset,
                                 currency=currency, 
                                 **kwargs)
 
@@ -297,13 +293,12 @@ class PrettyPandas(Styler):
         else:
             return add_formatter(locale=self.DEFAULT_LOCALE)
 
-    def as_unit(self, unit, subset=None, precision=None, location='prefix', **kwargs):
+    def as_unit(self, unit, precision=None, location='prefix', **kwargs):
         """Represent subset of dataframe as a special unit.
 
         Parameters:
         -----------
         :param unit: string representing unit to be used.
-        :param subset: Pandas slice to convert to percentages
         :param precision: int
             Number of decimal places to round to
         :param location: 'prefix' or 'suffix' indicating where the currency symbol
@@ -312,15 +307,16 @@ class PrettyPandas(Styler):
         precision = self.precision if precision is None else precision
 
         return self._format_cells(as_unit,
-                                  subset=subset,
                                   precision=precision,
                                   unit=unit,
                                   location=location, 
                                   **kwargs)
 
-
+    def as_number(self, *args, **kwargs):
+        """Shortcut for as_unit('', ...)"""
+        return self.as_unit('', *args, **kwargs)
+        
     def as_money(self,
-                 subset=None,
                  precision=None,
                  currency='$',
                  location='prefix', 
@@ -331,7 +327,6 @@ class PrettyPandas(Styler):
         -----------
         :param precision: int
             Number of decimal places to round to
-        :param subset: Pandas slice to convert to percentages
         :param currency: Currency string
         :param location: 'prefix' or 'suffix' indicating where the currency
             symbol should be.
@@ -344,11 +339,10 @@ class PrettyPandas(Styler):
             return self._format_cells(as_money,
                                       currency=currency,
                                       precision=precision,
-                                      subset=subset,
                                       location=location, 
                                       **kwargs)
 
-    def _format_cells(self, func, subset=None, **kwargs):
+    def _format_cells(self, func, subset=None, exclude=None, **kwargs):
         """Add formatting function to cells."""
 
         if self.replace_all_nans_with is not None \
@@ -359,20 +353,23 @@ class PrettyPandas(Styler):
         def fn(*args):
             return func(*args, **kwargs)
 
-        self.formatters.append(Formatter(subset=subset, function=fn))
+        self.formatters.append(Formatter(subset=subset, exclude=exclude, function=fn))
         return self
 
     def _apply_formatters(self):
         """Apply all added formatting."""
-        for subset, function in self.formatters:
+        for subset, exclude, function in self.formatters:
             if subset is None:
-                subset = self.data.index
+                subset = self.data.columns
             else:
-                subset = [s for s in subset if s in self.data]
+                subset = [s for s in subset if s in self.data.columns]
                 if not subset:
                     continue
-                subset = _non_reducing_slice(subset)
-            self.data.loc[subset] = self.data.loc[subset].applymap(function)
+                
+            if exclude is not None:
+                subset = [s for s in subset if s not in exclude]
+            
+            self.data.loc[:, subset] = self.data.loc[:, subset].applymap(function)
         return self
 
     def _apply_summaries(self):
