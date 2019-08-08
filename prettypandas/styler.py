@@ -50,7 +50,7 @@ def apply_pretty_globals():
         """)
 
 
-Formatter = namedtuple("Formatter", "subset, exclude, function")
+Formatter = namedtuple("Formatter", "subset, exclude, axis, function")
 
 class PrettyPandas(Styler):
     """Pretty pandas dataframe Styles.
@@ -342,7 +342,7 @@ class PrettyPandas(Styler):
                                       location=location, 
                                       **kwargs)
 
-    def _format_cells(self, func, subset=None, exclude=None, **kwargs):
+    def _format_cells(self, func, subset=None, exclude=None, axis='columns', **kwargs):
         """Add formatting function to cells."""
 
         if self.replace_all_nans_with is not None \
@@ -353,23 +353,32 @@ class PrettyPandas(Styler):
         def fn(*args):
             return func(*args, **kwargs)
 
-        self.formatters.append(Formatter(subset=subset, exclude=exclude, function=fn))
+        self.formatters.append(Formatter(subset=subset, exclude=exclude, axis=axis, function=fn))
         return self
 
     def _apply_formatters(self):
         """Apply all added formatting."""
-        for subset, exclude, function in self.formatters:
-            if subset is None:
-                subset = self.data.columns
+        for subset, exclude, axis, function in self.formatters:
+            if axis == 'columns':
+                index = self.data.columns
+            elif axis == 'rows':
+                index = self.data.index
             else:
-                subset = [s for s in subset if s in self.data.columns]
+                raise ValueError("axis must be one of 'columns' or 'rows'")
+            if subset is None:
+                subset = index
+            else:
+                subset = [s for s in subset if s in index]
                 if not subset:
                     continue
                 
             if exclude is not None:
                 subset = [s for s in subset if s not in exclude]
             
-            self.data.loc[:, subset] = self.data.loc[:, subset].applymap(function)
+            if axis == 'columns':
+                self.data.loc[:, subset] = self.data.loc[:, subset].applymap(function)
+            else:
+                self.data.loc[subset, :] = self.data.loc[subset, :].applymap(function)
         return self
 
     def _apply_summaries(self):
