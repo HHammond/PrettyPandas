@@ -1,7 +1,6 @@
 language: python
 python:
   - "2.7" # Min version supported by IPython
-  - "3.3" # Min version supported by IPython
   - "3.4"
   - "3.5"
   - "3.5-dev"
