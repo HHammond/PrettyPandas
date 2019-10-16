@@ -11,7 +11,7 @@ report quality tables with a simple API.
 ```python
 (
    df
-   .pipe(PrettyPandas)
+   .summarize
    .as_currency('GBP', subset='A')
    .as_percent(subset='B')
    .total()

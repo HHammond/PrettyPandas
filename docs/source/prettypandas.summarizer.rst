@@ -1,4 +1,3 @@
-
 prettypandas.summarize module
 =============================
 

@@ -12,9 +12,11 @@ create report qualitiy tables with a simple API.
 
 .. code-block:: python
 
+   import prettypandas
+
    (
        df
-       .pipe(PrettyPandas)
+       .summarize
        .as_currency('GBP', subset='A')
        .as_percent(subset='B')
        .total()
