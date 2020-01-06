@@ -74,7 +74,7 @@ class PrettyPandas(Styler):
     """
 
     #: Default colour for header backgrounds
-    DEFAULT_BACKGROUND = "#eee"
+    DEFAULT_BACKGROUND = "#8883"  #transparent grey that works in both JupyterLab Light/Dark modes
 
     #: Default color for table borders
     DEFAULT_BORDER_COLOUR = '#c0c0c0'
@@ -89,6 +89,7 @@ class PrettyPandas(Styler):
     #: Base styles
     STYLES = [
         {'selector': 'th', 'props': HEADER_PROPERTIES},
+        {'selector': 'tr', 'props': [('background', 'none')]},
         {'selector': 'td', 'props': [('text-align', 'right'),
                                      ('min-width', '3em')]},
         {'selector': '*', 'props': [('border-color', DEFAULT_BORDER_COLOUR)]},
