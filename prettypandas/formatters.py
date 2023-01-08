@@ -88,3 +88,17 @@ def as_currency(currency='USD', locale=LOCALE_OBJ):
         return numbers.format_currency(v, currency=currency, locale=LOCALE_OBJ)
     return inner
 
+
+def as_separators():
+    """Convert number to a string with separators.
+
+    Parameters:
+    -----------
+    :param v: numerical value to be converted
+    """
+    @_surpress_formatting_errors
+    def inner(v):
+        if not isinstance(v, (int, float)):
+            raise TypeError("Numeric type required.")
+        return "{:,}".format(v)
+    return inner

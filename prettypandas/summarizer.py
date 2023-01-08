@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from operator import methodcaller
 import pandas as pd
-from .formatters import as_percent, as_currency, as_unit, LOCALE_OBJ
+from .formatters import as_percent, as_currency, as_unit, as_separators, LOCALE_OBJ
 
 
 def _axis_is_rows(axis):
@@ -367,4 +367,12 @@ class PrettyPandas(object):
             args,
             kwargs
         )
+        return self._add_formatter(f)
+
+    def as_separators(self, *args, **kwargs):
+        """Format subset as separators
+
+        :param subset: Pandas subset
+        """
+        f = Formatter(as_separators(), args, kwargs)
         return self._add_formatter(f)
